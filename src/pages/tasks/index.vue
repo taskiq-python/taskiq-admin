@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatDate } from "~/utils"
+
 const route = useRoute()
 const router = useRouter()
 
@@ -28,6 +30,13 @@ const { data } = useAsyncData(
 )
 
 const totalPages = computed(() => Math.ceil((data.value?.count || 0) / perPage))
+
+function limitText(text: string, length: number) {
+  if (text.length > length) {
+    return text.slice(0, length).trim() + "..."
+  }
+  return text
+}
 
 function handleNext() {
   router.push({
@@ -87,7 +96,7 @@ function handlePrev() {
         </thead>
         <tbody>
           <tr v-if="data" v-for="task in data.tasks">
-            <td>{{ task.name }}</td>
+            <td class="task-name-td">{{ task.name }}</td>
             <td>
               <NuxtLink :to="{ name: 'tasks-id', params: { id: task.id } }">
                 {{ task.id }}
@@ -106,10 +115,10 @@ function handlePrev() {
               </span>
             </td>
             <td>{{ task.args }}</td>
-            <td>{{ task.kwargs }}</td>
+            <td>{{ limitText(JSON.stringify(task.kwargs), 50) }}</td>
             <td>{{ task.returnValue }}</td>
-            <td>{{ task.startedAt }}</td>
-            <td>{{ task.finishedAt }}</td>
+            <td>{{ formatDate(task.startedAt) }}</td>
+            <td>{{ task.finishedAt ? formatDate(task.finishedAt) : null }}</td>
             <td>{{ task.executionTime }}</td>
             <td>{{ task.worker }}</td>
           </tr>
@@ -128,7 +137,9 @@ function handlePrev() {
               >Previous</span
             >
           </li>
-          <span>{{ page }} / {{ totalPages }}</span>
+          <div class="flex justify-center items-center px-2">
+            <span>{{ page }} / {{ totalPages }}</span>
+          </div>
           <li class="page-item">
             <span
               @click="handleNext"
@@ -142,3 +153,10 @@ function handlePrev() {
     </div>
   </div>
 </template>
+<style scoped>
+.task-name-td {
+  max-width: 300px;
+  overflow-x: scroll;
+  scrollbar-width: thin;
+}
+</style>
