@@ -2,6 +2,7 @@
   "name": "nuxt-app",
   "private": true,
   "type": "module",
+  "version": "1.0.0",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -20,7 +21,7 @@
     "vue-router": "^4.5.0",
     "zod": "^3.23.8"
   },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447",
+  "packageManager": "pnpm@8.7.6+sha1.a428b12202bc4f23b17e6dffe730734dae5728e2",
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.2",
     "@types/better-sqlite3": "^7.6.12"
