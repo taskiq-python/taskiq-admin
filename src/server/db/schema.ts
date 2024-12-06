@@ -12,9 +12,11 @@ export const tasksTable = sqliteTable(
     executionTime: real("execution_time"),
     startedAt: int("started_at", { mode: "timestamp" }).notNull(),
     finishedAt: int("finished_at", { mode: "timestamp" }),
-    args: text({ mode: "json" }),
-    kwargs: text({ mode: "json" }),
-    returnValue: text("return_value", { mode: "json" }),
+    args: text({ mode: "json" }).$type<Array<any>>(),
+    kwargs: text({ mode: "json" }).$type<Record<string, any>>(),
+    returnValue: text("return_value", { mode: "json" }).$type<
+      Record<string, any>
+    >(),
   },
   (t) => ({
     idxStartedAt: index("idx_tasks__started_at").on(t.startedAt),
