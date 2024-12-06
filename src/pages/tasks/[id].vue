@@ -58,6 +58,10 @@ const { data: task, error } = useFetch(`/api/tasks/${route.params.id}`)
               <td>{{ task.finishedAt }}</td>
             </tr>
             <tr>
+              <th>Error</th>
+              <td>{{ task.error }}</td>
+            </tr>
+            <tr>
               <th>Worker</th>
               <td>{{ task.worker }}</td>
             </tr>
