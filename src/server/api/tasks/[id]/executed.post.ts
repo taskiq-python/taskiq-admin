@@ -1,15 +1,19 @@
 import {
-  defineEventHandler,
-  getValidatedRouterParams,
-  readValidatedBody,
-} from "h3"
-import {
   taskExecutedRequestSchema,
   taskRouteParamsSchema,
 } from "../../../schemas/tasks"
 import { tasksRepository } from "../../../repositories/tasks"
+import { envVariables } from "~/server/env"
 
 export default defineEventHandler(async (event) => {
+  const accessToken = getRequestHeader(event, "access-token")
+  if (!accessToken || accessToken !== envVariables.taskiqAdminApiToken) {
+    throw createError({
+      status: 401,
+      statusMessage: "Unauthorized",
+      message: "Invalid access token",
+    })
+  }
   const params = await getValidatedRouterParams(
     event,
     taskRouteParamsSchema.parse

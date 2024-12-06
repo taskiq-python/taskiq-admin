@@ -3,4 +3,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   srcDir: "src/",
   modules: ["@nuxtjs/tailwindcss"],
+  typescript: {
+    strict: true,
+  },
 })

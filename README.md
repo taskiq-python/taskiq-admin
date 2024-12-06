@@ -72,9 +72,9 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
 3) Replace `ACCESS_TOKEN` with any secret enough string and run:
 ```bash
 docker run -d --rm \
-  -e ACCESS_TOKEN=supersecret \
   -p "3000:3000" \
   -v ./taskiq-admin-data/:/usr/database/ \
+  -e TASKIQ_ADMIN_API_TOKEN=supersecret \
   --name taskiq-admin \
   artur10/taskiq-admin:1.0.0
 ```
