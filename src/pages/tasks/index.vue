@@ -11,8 +11,8 @@ if (!route.query.page) {
 const perPage = 10
 const searchRef = ref("")
 
+const search = computed(() => route.query.search || "")
 const page = computed(() => Number(route.query.page) || 1)
-const search = computed(() => Number(route.query.search) || "")
 
 const { data } = useAsyncData(
   "tasks",
@@ -36,6 +36,18 @@ function limitText(text: string, length: number) {
     return text.slice(0, length).trim() + "..."
   }
   return text
+}
+
+function searchSubmit() {
+  if (searchRef.value) {
+    router.push({
+      path: "/tasks",
+      query: {
+        page: 1,
+        search: searchRef.value,
+      },
+    })
+  }
 }
 
 function handleNext() {
@@ -71,22 +83,22 @@ function handlePrev() {
           <NuxtLink to="/api/tasks/backup" target="_blank"> Backup </NuxtLink>
         </button>
       </div>
-      <form method="get" action="">
-        <div class="row mb-3">
-          <div class="col">
-            <div class="d-flex justify-content-end">
-              <input
-                type="search"
-                name="search"
-                class="form-control w-auto"
-                placeholder="Search tasks..."
-                v-model="searchRef"
-              />
-              <button type="submit" class="btn btn-primary ml-2">Search</button>
-            </div>
+      <div class="row mb-3">
+        <div class="col">
+          <div class="d-flex justify-content-end">
+            <input
+              type="search"
+              name="search"
+              class="form-control w-auto"
+              placeholder="Search tasks..."
+              v-model="searchRef"
+            />
+            <button @click="searchSubmit" class="btn btn-primary ml-2">
+              Search
+            </button>
           </div>
         </div>
-      </form>
+      </div>
     </div>
 
     <div class="table-responsive">

@@ -1,14 +1,14 @@
 import { db } from "../db"
 import { tasksTable } from "../db/schema"
-import { count, eq, desc, ilike } from "drizzle-orm"
 import { takeUniqueOrThrow } from "../utils"
+import { count, eq, desc, like } from "drizzle-orm"
 
 export type TaskState = "pending" | "success" | "failed"
 
 class TasksRepository {
   async getAll(name: string | null, limit: number, offset: number) {
     const whereCondition = name
-      ? ilike(tasksTable.name, `%${name}%`)
+      ? like(tasksTable.name, `%${name.toLowerCase()}%`)
       : undefined
 
     const countResult = await db
