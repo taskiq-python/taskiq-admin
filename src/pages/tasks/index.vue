@@ -39,44 +39,55 @@ function limitText(text: string, length: number) {
 }
 
 function handleNext() {
-  router.push({
-    path: "/tasks",
-    query: {
-      page: page.value + 1,
-      search: searchRef.value || undefined,
-    },
-  })
+  if (page.value < totalPages.value) {
+    router.push({
+      path: "/tasks",
+      query: {
+        page: page.value + 1,
+        search: searchRef.value || undefined,
+      },
+    })
+  }
 }
 
 function handlePrev() {
-  router.push({
-    path: "/tasks",
-    query: {
-      page: page.value - 1,
-      search: searchRef.value || undefined,
-    },
-  })
+  if (page.value > 1) {
+    router.push({
+      path: "/tasks",
+      query: {
+        page: page.value - 1,
+        search: searchRef.value || undefined,
+      },
+    })
+  }
 }
 </script>
 
 <template>
   <div class="container-fluid py-4">
-    <form method="get" action="">
-      <div class="row mb-3">
-        <div class="col">
-          <div class="d-flex justify-content-end">
-            <input
-              type="search"
-              name="search"
-              class="form-control w-auto"
-              placeholder="Search tasks..."
-              v-model="searchRef"
-            />
-            <button type="submit" class="btn btn-primary ml-2">Search</button>
+    <div class="flex justify-between">
+      <div>
+        <button class="btn btn-outline-primary">
+          <NuxtLink to="/api/tasks/backup" target="_blank"> Backup </NuxtLink>
+        </button>
+      </div>
+      <form method="get" action="">
+        <div class="row mb-3">
+          <div class="col">
+            <div class="d-flex justify-content-end">
+              <input
+                type="search"
+                name="search"
+                class="form-control w-auto"
+                placeholder="Search tasks..."
+                v-model="searchRef"
+              />
+              <button type="submit" class="btn btn-primary ml-2">Search</button>
+            </div>
           </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
 
     <div class="table-responsive">
       <table class="table table-striped table-hover">
