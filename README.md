@@ -76,7 +76,7 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         return super().post_execute(message, result)
 ```
 
-2) Pull the image from DockerHub: `docker pull artur10/taskiq-admin:1.1.0`
+2) Pull the image from DockerHub: `docker pull artur10/taskiq-admin:1.1.1`
 
 3) Replace `ACCESS_TOKEN` with any secret enough string and run:
 ```bash
@@ -85,7 +85,7 @@ docker run -d --rm \
   -v ./taskiq-admin-data/:/usr/database/ \
   -e TASKIQ_ADMIN_API_TOKEN=supersecret \
   --name taskiq-admin \
-  artur10/taskiq-admin:1.1.0
+  artur10/taskiq-admin:1.1.1
 ```
 
 4) Go to `http://localhost:3000/tasks`
