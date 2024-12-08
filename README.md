@@ -1,5 +1,14 @@
 ## Broker-agnostic admin pangel for Taskiq
 
+Standalone admin panel with all data stored in SQLite database
+
+
+- [Broker-agnostic admin pangel for Taskiq](#broker-agnostic-admin-pangel-for-taskiq)
+  - [Previews](#previews)
+  - [Usage](#usage)
+  - [Development](#development)
+
+### Previews
 Tasks Page | Task Details Page
 :-------------------------:|:-------------------------:
 ![Alt text](./docs/images/preview1.png) | ![Alt text](./docs/images/preview2.png)
@@ -67,7 +76,7 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         return super().post_execute(message, result)
 ```
 
-2) Pull the image from DockerHub: `docker pull artur10/taskiq-admin:1.0.0`
+2) Pull the image from DockerHub: `docker pull artur10/taskiq-admin:1.1.0`
 
 3) Replace `ACCESS_TOKEN` with any secret enough string and run:
 ```bash
@@ -76,7 +85,12 @@ docker run -d --rm \
   -v ./taskiq-admin-data/:/usr/database/ \
   -e TASKIQ_ADMIN_API_TOKEN=supersecret \
   --name taskiq-admin \
-  artur10/taskiq-admin:1.0.0
+  artur10/taskiq-admin:1.1.0
 ```
 
 4) Go to `http://localhost:3000/tasks`
+
+### Development
+1) Run `pnpm install` to install all dependencies
+2) Run `pnpm db:push` to create the sqlite database if needed
+3) Run `pnpm dev` to run the project
