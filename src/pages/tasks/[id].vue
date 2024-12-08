@@ -75,3 +75,15 @@ const { data: task, error } = useFetch(`/api/tasks/${route.params.id}`)
     </div>
   </div>
 </template>
+
+<style scoped>
+th,
+td {
+  padding: 8px;
+  vertical-align: top;
+  word-break: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 200px;
+}
+</style>
