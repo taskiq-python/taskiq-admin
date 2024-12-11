@@ -3,7 +3,7 @@ import { tasksTable } from "../db/schema"
 import { takeUniqueOrThrow } from "../utils"
 import { count, eq, desc, like, and } from "drizzle-orm"
 
-export type TaskState = "pending" | "success" | "failed"
+export type TaskState = "running" | "success" | "failed" | "abandoned"
 
 class TasksRepository {
   async getAll({
@@ -15,7 +15,7 @@ class TasksRepository {
     limit: number
     offset: number
     name: string | null
-    state?: "success" | "pending" | "failure"
+    state?: "success" | "running" | "failure" | "abandoned"
   }) {
     const whereCondition = name
       ? like(tasksTable.name, `%${name.toLowerCase()}%`)
@@ -57,12 +57,12 @@ class TasksRepository {
     name: string
     worker: string
     startedAt: Date
-    args: Record<string, any>
+    args: Array<any>
+    finishedAt: Date | null
     kwargs: Record<string, any>
     executionTime: number | null
-    returnValue: Record<string, any> | null
-    finishedAt: Date | null
-    state: "success" | "pending" | "failure"
+    returnValue: { return_value: any } | null
+    state: "success" | "running" | "failure"
   }) {
     return db.insert(tasksTable).values(values)
   }
@@ -70,14 +70,21 @@ class TasksRepository {
   async update(
     taskId: string,
     values: {
-      state?: "success" | "pending" | "failure"
       error?: string | null
       executionTime?: number
       finishedAt?: Date | null
-      returnValue?: object | null
+      returnValue?: { return_value: any } | null
+      state?: "success" | "running" | "failure" | "abandoned"
     }
   ) {
     return db.update(tasksTable).set(values).where(eq(tasksTable.id, taskId))
+  }
+
+  async setAbandoned() {
+    return db
+      .update(tasksTable)
+      .set({ state: "abandoned" })
+      .where(eq(tasksTable.state, "running"))
   }
 }
 
