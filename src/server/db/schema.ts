@@ -14,9 +14,9 @@ export const tasksTable = sqliteTable(
     finishedAt: int("finished_at", { mode: "timestamp" }),
     args: text({ mode: "json" }).$type<Array<any>>(),
     kwargs: text({ mode: "json" }).$type<Record<string, any>>(),
-    returnValue: text("return_value", { mode: "json" }).$type<
-      Record<string, any>
-    >(),
+    returnValue: text("return_value", { mode: "json" }).$type<{
+      return_value: any
+    }>(),
   },
   (t) => ({
     idxStartedAt: index("idx_tasks__started_at").on(t.startedAt),
