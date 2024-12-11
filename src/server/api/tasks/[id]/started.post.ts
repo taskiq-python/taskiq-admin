@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     finishedAt: null,
     returnValue: null,
     executionTime: null,
-    state: "pending",
+    state: "running",
     args: body.args,
     id: params.id,
     worker: body.worker,

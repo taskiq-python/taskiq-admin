@@ -30,7 +30,8 @@ const { data: task, error } = useFetch(`/api/tasks/${route.params.id}`)
                   :class="{
                     'bg-success': task.state === 'success',
                     'bg-danger': task.state === 'failure',
-                    'bg-warning': task.state === 'pending',
+                    'bg-warning': task.state === 'running',
+                    'bg-dark': task.state === 'abandoned',
                   }"
                 >
                   {{ task.state }}

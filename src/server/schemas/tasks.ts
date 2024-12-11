@@ -23,5 +23,5 @@ export const getTasksQueryParamsSchema = z.object({
   search: z.string().optional(),
   limit: z.coerce.number().gte(0),
   offset: z.coerce.number().gte(0),
-  state: z.enum(["success", "pending", "failure"]).optional(),
+  state: z.enum(["success", "running", "failure", "abandoned"]).optional(),
 })

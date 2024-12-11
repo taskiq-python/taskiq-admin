@@ -6,7 +6,9 @@ export const tasksTable = sqliteTable(
   {
     id: text().primaryKey(),
     name: text().notNull(),
-    state: text({ enum: ["success", "pending", "failure"] }).notNull(),
+    state: text({
+      enum: ["success", "running", "failure", "abandoned"],
+    }).notNull(),
     error: text(),
     worker: text(),
     executionTime: real("execution_time"),
@@ -19,8 +21,10 @@ export const tasksTable = sqliteTable(
     }>(),
   },
   (t) => ({
+    idxState: index("idx_tasks__state").on(t.state),
     idxStartedAt: index("idx_tasks__started_at").on(t.startedAt),
     idxFinishedAt: index("idx_tasks__finished_at").on(t.finishedAt),
+    idxExecutionTime: index("idx_tasks__execution_time").on(t.executionTime),
   })
 )
 

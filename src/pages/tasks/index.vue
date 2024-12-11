@@ -17,7 +17,7 @@ const state = computed(() => route.query.state)
 const search = computed(() => route.query.search || "")
 const page = computed(() => Number(route.query.page) || 1)
 
-const { data, refresh } = useAsyncData(
+const { data, refresh } = useAsyncData<{ tasks: TaskSelect[]; count: number }>(
   "tasks",
   () =>
     $fetch(`/api/tasks`, {
@@ -65,7 +65,9 @@ const formatTaskName = (taskName: string) => {
   }
 }
 
-const stateHandler = (state: "pending" | "success" | "failure") => {
+const stateHandler = (
+  state: "running" | "success" | "failure" | "abandoned"
+) => {
   router.push({
     path: "/tasks",
     query: {
@@ -172,7 +174,8 @@ const handlePrev = () => {
                 :class="{
                   'bg-success': task.state === 'success',
                   'bg-danger': task.state === 'failure',
-                  'bg-warning': task.state === 'pending',
+                  'bg-warning': task.state === 'running',
+                  'bg-dark': task.state === 'abandoned',
                 }"
               >
                 {{ task.state }}
@@ -180,10 +183,10 @@ const handlePrev = () => {
             </td>
             <td>{{ task.args }}</td>
             <td>{{ limitText(JSON.stringify(task.kwargs), 40) }}</td>
-            <td>{{ formatReturnValue(task) }}</td>
-            <td>{{ formatDate(task.startedAt) }}</td>
+            <td>{{ limitText(formatReturnValue(task), 21) }}</td>
+            <td>{{ formatDate(String(task.startedAt)) }}</td>
             <td>
-              {{ task.finishedAt ? formatDate(task.finishedAt) : null }}
+              {{ task.finishedAt ? formatDate(String(task.finishedAt)) : null }}
             </td>
             <td>{{ task.executionTime }}</td>
             <td>{{ task.worker }}</td>
