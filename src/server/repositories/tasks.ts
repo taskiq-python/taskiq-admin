@@ -1,12 +1,22 @@
 import { db } from "../db"
 import { tasksTable } from "../db/schema"
 import { takeUniqueOrThrow } from "../utils"
-import { count, eq, desc, like } from "drizzle-orm"
+import { count, eq, desc, like, and } from "drizzle-orm"
 
 export type TaskState = "pending" | "success" | "failed"
 
 class TasksRepository {
-  async getAll(name: string | null, limit: number, offset: number) {
+  async getAll({
+    name,
+    state,
+    limit,
+    offset,
+  }: {
+    limit: number
+    offset: number
+    name: string | null
+    state?: "success" | "pending" | "failure"
+  }) {
     const whereCondition = name
       ? like(tasksTable.name, `%${name.toLowerCase()}%`)
       : undefined
@@ -16,13 +26,17 @@ class TasksRepository {
         count: count(),
       })
       .from(tasksTable)
-      .where(whereCondition)
+      .where(
+        and(whereCondition, state ? eq(tasksTable.state, state) : undefined)
+      )
       .then(takeUniqueOrThrow)
 
     const tasks = await db
       .select()
       .from(tasksTable)
-      .where(whereCondition)
+      .where(
+        and(whereCondition, state ? eq(tasksTable.state, state) : undefined)
+      )
       .orderBy(desc(tasksTable.startedAt))
       .limit(limit)
       .offset(offset)

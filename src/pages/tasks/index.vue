@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { formatDate } from "~/utils"
+import { useIntervalFn } from "@vueuse/core"
+import type { TaskSelect } from "~/server/db/schema"
 
 const route = useRoute()
 const router = useRouter()
@@ -11,34 +13,70 @@ if (!route.query.page) {
 const perPage = 10
 const searchRef = ref("")
 
+const state = computed(() => route.query.state)
 const search = computed(() => route.query.search || "")
 const page = computed(() => Number(route.query.page) || 1)
 
-const { data } = useAsyncData(
+const { data, refresh } = useAsyncData(
   "tasks",
   () =>
     $fetch(`/api/tasks`, {
       params: {
         limit: perPage,
+        state: state.value,
         search: search.value,
         offset: (page.value - 1) * perPage,
       },
     }),
   {
-    watch: [page, search],
+    watch: [page, search, state],
   }
 )
 
+useIntervalFn(() => {
+  console.log("REFRESHING...")
+  refresh()
+}, 3000)
+
 const totalPages = computed(() => Math.ceil((data.value?.count || 0) / perPage))
 
-function limitText(text: string, length: number) {
+const limitText = (text: string, length: number) => {
   if (text.length > length) {
     return text.slice(0, length).trim() + "..."
   }
   return text
 }
 
-function searchSubmit() {
+const formatReturnValue = (task: TaskSelect) => {
+  if (task.returnValue?.return_value) {
+    return task.returnValue.return_value
+  } else {
+    return "null"
+  }
+}
+
+// temporarily, while dishka hasn't fixed it's module naming bug
+const formatTaskName = (taskName: string) => {
+  if (taskName.includes(":")) {
+    const parts = taskName.split(":")
+    return parts[parts.length - 1]
+  } else {
+    return taskName
+  }
+}
+
+const stateHandler = (state: "pending" | "success" | "failure") => {
+  router.push({
+    path: "/tasks",
+    query: {
+      page: 1,
+      state: state,
+      search: searchRef.value || undefined,
+    },
+  })
+}
+
+const searchSubmit = () => {
   if (searchRef.value) {
     router.push({
       path: "/tasks",
@@ -50,24 +88,26 @@ function searchSubmit() {
   }
 }
 
-function handleNext() {
+const handleNext = () => {
   if (page.value < totalPages.value) {
     router.push({
       path: "/tasks",
       query: {
         page: page.value + 1,
+        state: state.value,
         search: searchRef.value || undefined,
       },
     })
   }
 }
 
-function handlePrev() {
+const handlePrev = () => {
   if (page.value > 1) {
     router.push({
       path: "/tasks",
       query: {
         page: page.value - 1,
+        state: state.value,
         search: searchRef.value || undefined,
       },
     })
@@ -113,13 +153,13 @@ function handlePrev() {
             <th>Result</th>
             <th>Started</th>
             <th>Finished</th>
-            <th>Runtime</th>
+            <th>Runtime (s)</th>
             <th>Worker</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="data" v-for="task in data.tasks">
-            <td class="task-name-td">{{ task.name }}</td>
+            <td class="task-name-td">{{ formatTaskName(task.name) }}</td>
             <td>
               <NuxtLink :to="{ name: 'tasks-id', params: { id: task.id } }">
                 {{ task.id }}
@@ -127,7 +167,8 @@ function handlePrev() {
             </td>
             <td>
               <span
-                class="py-1 px-2 badge"
+                @click="stateHandler(task.state)"
+                class="py-1 px-2 badge cursor-pointer"
                 :class="{
                   'bg-success': task.state === 'success',
                   'bg-danger': task.state === 'failure',
@@ -138,10 +179,12 @@ function handlePrev() {
               </span>
             </td>
             <td>{{ task.args }}</td>
-            <td>{{ limitText(JSON.stringify(task.kwargs), 50) }}</td>
-            <td>{{ task.returnValue }}</td>
+            <td>{{ limitText(JSON.stringify(task.kwargs), 40) }}</td>
+            <td>{{ formatReturnValue(task) }}</td>
             <td>{{ formatDate(task.startedAt) }}</td>
-            <td>{{ task.finishedAt ? formatDate(task.finishedAt) : null }}</td>
+            <td>
+              {{ task.finishedAt ? formatDate(task.finishedAt) : null }}
+            </td>
             <td>{{ task.executionTime }}</td>
             <td>{{ task.worker }}</td>
           </tr>
@@ -153,23 +196,25 @@ function handlePrev() {
       <nav>
         <ul class="pagination">
           <li class="page-item">
-            <span
+            <button
               @click="handlePrev"
               :class="{ disabled: page === 1 }"
               class="page-link cursor-pointer"
-              >Previous</span
             >
+              Previous
+            </button>
           </li>
           <div class="flex justify-center items-center px-2">
             <span>{{ page }} / {{ totalPages }}</span>
           </div>
           <li class="page-item">
-            <span
+            <button
               @click="handleNext"
               class="page-link cursor-pointer"
               :class="{ disabled: page === totalPages }"
-              >Next</span
             >
+              Next
+            </button>
           </li>
         </ul>
       </nav>

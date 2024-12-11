@@ -5,11 +5,12 @@ import { getTasksQueryParamsSchema } from "../../schemas/tasks"
 export default defineEventHandler(async (event) => {
   const query = await getValidatedQuery(event, getTasksQueryParamsSchema.parse)
 
-  const { tasks, count } = await tasksRepository.getAll(
-    query.search ? query.search : null,
-    query.limit,
-    query.offset
-  )
+  const { tasks, count } = await tasksRepository.getAll({
+    name: query.search ? query.search : null,
+    limit: query.limit,
+    offset: query.offset,
+    state: query.state,
+  })
 
   return { tasks, count }
 })
