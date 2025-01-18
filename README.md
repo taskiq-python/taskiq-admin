@@ -1,9 +1,9 @@
-## Broker-agnostic admin pangel for Taskiq
+## Broker-agnostic admin panel for Taskiq
 
 Standalone admin panel with all data stored in SQLite database
 
 
-- [Broker-agnostic admin pangel for Taskiq](#broker-agnostic-admin-pangel-for-taskiq)
+- [Broker-agnostic admin panel for Taskiq](#broker-agnostic-admin-panel-for-taskiq)
   - [Previews](#previews)
   - [Usage](#usage)
   - [Development](#development)
