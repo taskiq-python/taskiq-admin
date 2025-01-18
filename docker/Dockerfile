@@ -36,7 +36,7 @@ COPY --from=build /app/src/server/db/schema.ts /usr/app/src/server/db/schema.ts
 EXPOSE 3000
 ENV HOST=0.0.0.0 NODE_ENV=production
 ENV DB_FILE_PATH=/usr/database/database.db
-ENV DB_BACKUP_FILE_PATH=/usr/database/backup.db
+ENV BACKUP_FILE_PATH=/usr/database/backup.db
 
 RUN npm install drizzle-kit drizzle-orm dotenv better-sqlite3
 
