@@ -1,118 +1,127 @@
 <script setup lang="ts">
-import { formatDate } from "~/utils"
-import { useIntervalFn } from "@vueuse/core"
-import type { TaskSelect } from "~/server/db/schema"
+import { useAsyncData } from '#app'
+import { useIntervalFn } from '@vueuse/core'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Button } from '@/components/ui/button'
+import { Input } from '~/components/ui/input'
+
+import type { TaskSelect } from '~/server/db/schema'
+import TasksTable from '~/components/tasks-table.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-if (!route.query.page) {
-  router.replace({ path: "/tasks", query: { page: 1 } })
+if (!route.query.page || !route.query.perPage) {
+  router.push({ path: '/tasks', query: { page: 1, perPage: 15 } })
 }
 
-const perPage = 10
-const searchRef = ref("")
-
-const state = computed(() => route.query.state)
-const search = computed(() => route.query.search || "")
-const page = computed(() => Number(route.query.page) || 1)
+const searchRef = ref('')
+const queryParams = reactive<{
+  page: number
+  perPage: number
+  state: string | undefined
+  search: string | undefined
+  sortByRuntime: string | undefined
+  sortByStartedAt: string | undefined
+}>({
+  page: Number(route.query.page) || 1,
+  perPage: Number(route.query.perPage) || 15,
+  state: route.query.state?.toString(),
+  search: route.query.search?.toString(),
+  sortByRuntime: route.query.sortByRuntime?.toString(),
+  sortByStartedAt: route.query.sortByStartedAt?.toString()
+})
 
 const { data, refresh } = useAsyncData<{ tasks: TaskSelect[]; count: number }>(
-  "tasks",
+  'tasks',
   () =>
     $fetch(`/api/tasks`, {
       params: {
-        limit: perPage,
-        state: state.value,
-        search: search.value,
-        offset: (page.value - 1) * perPage,
-      },
+        limit: queryParams.perPage,
+        state: queryParams.state,
+        search: queryParams.search,
+        offset: (queryParams.page - 1) * queryParams.perPage,
+        sortByRuntime: queryParams.sortByRuntime,
+        sortByStartedAt: queryParams.sortByStartedAt
+      }
     }),
   {
-    watch: [page, search, state],
+    watch: [queryParams]
   }
 )
 
-useIntervalFn(() => {
-  console.log("REFRESHING...")
-  refresh()
-}, 3000)
+const filtersExist = computed(
+  () =>
+    queryParams.state ||
+    queryParams.search ||
+    queryParams.sortByRuntime ||
+    queryParams.sortByStartedAt
+)
 
-const totalPages = computed(() => Math.ceil((data.value?.count || 0) / perPage))
-
-const limitText = (text: string, length: number) => {
-  if (text.length > length) {
-    return text.slice(0, length).trim() + "..."
-  }
-  return text
-}
-
-const formatReturnValue = (task: TaskSelect) => {
-  if (task.returnValue?.return_value) {
-    return task.returnValue.return_value
-  } else {
-    return "null"
-  }
-}
-
-// temporarily, while dishka hasn't fixed it's module naming bug
-const formatTaskName = (taskName: string) => {
-  if (taskName.includes(":")) {
-    const parts = taskName.split(":")
-    return parts[parts.length - 1]
-  } else {
-    return taskName
-  }
-}
-
-const stateHandler = (
-  state: "running" | "success" | "failure" | "abandoned"
-) => {
-  router.push({
-    path: "/tasks",
+watch(queryParams, async () => {
+  router.replace({
+    path: '/tasks',
     query: {
-      page: 1,
-      state: state,
-      search: searchRef.value || undefined,
-    },
+      ...queryParams
+    }
   })
-}
+})
+
+const totalPages = computed(() =>
+  Math.ceil((data.value?.count || 0) / queryParams.perPage)
+)
+
+useIntervalFn(() => {
+  console.log('REFRESHING...')
+  refresh()
+}, 2000)
 
 const searchSubmit = () => {
   if (searchRef.value) {
-    router.push({
-      path: "/tasks",
-      query: {
-        page: 1,
-        search: searchRef.value,
-      },
-    })
+    queryParams.search = searchRef.value
   }
 }
 
+const clearFilters = () => {
+  queryParams.state = undefined
+  queryParams.search = undefined
+  queryParams.sortByRuntime = undefined
+  queryParams.sortByStartedAt = undefined
+}
+
+const sortHandler = (field: 'runtime' | 'startedAt', order: 'asc' | 'desc') => {
+  if (field === 'runtime') {
+    queryParams.sortByRuntime = order
+  }
+  if (field === 'startedAt') {
+    queryParams.sortByStartedAt = order
+  }
+}
+const stateHandler = (
+  state: 'running' | 'success' | 'failure' | 'abandoned'
+) => {
+  queryParams.page = 1
+  queryParams.state = state
+}
+const searchHandler = (value: string) => {
+  searchRef.value = value
+  queryParams.search = value
+}
+provide('queryParams', queryParams)
+provide('sortHandler', sortHandler)
+provide('stateHandler', stateHandler)
+provide('searchHandler', searchHandler)
+
 const handleNext = () => {
-  if (page.value < totalPages.value) {
-    router.push({
-      path: "/tasks",
-      query: {
-        page: page.value + 1,
-        state: state.value,
-        search: searchRef.value || undefined,
-      },
-    })
+  if (queryParams.page < totalPages.value) {
+    queryParams.page++
   }
 }
 
 const handlePrev = () => {
-  if (page.value > 1) {
-    router.push({
-      path: "/tasks",
-      query: {
-        page: page.value - 1,
-        state: state.value,
-        search: searchRef.value || undefined,
-      },
-    })
+  if (queryParams.page > 1) {
+    queryParams.page--
   }
 }
 </script>
@@ -121,113 +130,89 @@ const handlePrev = () => {
   <div class="container-fluid py-4">
     <div class="flex justify-between">
       <div>
-        <button class="btn btn-outline-primary">
-          <NuxtLink to="/api/tasks/backup" target="_blank"> Backup </NuxtLink>
-        </button>
+        <Button class="btn btn-outline-primary">
+          <NuxtLink
+            to="/api/tasks/backup"
+            target="_blank"
+          >
+            Backup
+          </NuxtLink>
+        </Button>
       </div>
       <div class="row mb-3">
-        <div class="col">
-          <div class="d-flex justify-content-end">
-            <input
+        <div class="flex gap-3">
+          <div>
+            <Button
+              variant="outline"
+              v-if="filtersExist"
+              @click="clearFilters"
+              class="cursor-pointer"
+              >Clear Filters</Button
+            >
+          </div>
+          <div class="flex justify-center items-center">
+            <p>Per Page:</p>
+            <select
+              v-model="queryParams.perPage"
+              aria-label="Default select example"
+            >
+              <option value="10">10</option>
+              <option
+                value="15"
+                selected
+              >
+                15
+              </option>
+              <option value="20">20</option>
+            </select>
+          </div>
+          <div class="flex">
+            <Input
               type="search"
               name="search"
               class="form-control w-auto"
               placeholder="Search tasks..."
               v-model="searchRef"
             />
-            <button @click="searchSubmit" class="btn btn-primary ml-2">
+            <Button
+              @click="searchSubmit"
+              class="btn btn-primary ml-2"
+            >
               Search
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-striped table-hover">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>ID</th>
-            <th>State</th>
-            <th>Args</th>
-            <th>Kwargs</th>
-            <th>Result</th>
-            <th>Started</th>
-            <th>Finished</th>
-            <th>Runtime (s)</th>
-            <th>Worker</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="data" v-for="task in data.tasks">
-            <td class="task-name-td">{{ formatTaskName(task.name) }}</td>
-            <td>
-              <NuxtLink :to="{ name: 'tasks-id', params: { id: task.id } }">
-                {{ task.id }}
-              </NuxtLink>
-            </td>
-            <td>
-              <span
-                @click="stateHandler(task.state)"
-                class="py-1 px-2 badge cursor-pointer"
-                :class="{
-                  'bg-success': task.state === 'success',
-                  'bg-danger': task.state === 'failure',
-                  'bg-warning': task.state === 'running',
-                  'bg-dark': task.state === 'abandoned',
-                }"
-              >
-                {{ task.state }}
-              </span>
-            </td>
-            <td>{{ task.args }}</td>
-            <td>{{ limitText(JSON.stringify(task.kwargs), 40) }}</td>
-            <td>{{ limitText(formatReturnValue(task), 21) }}</td>
-            <td>{{ formatDate(String(task.startedAt)) }}</td>
-            <td>
-              {{ task.finishedAt ? formatDate(String(task.finishedAt)) : null }}
-            </td>
-            <td>{{ task.executionTime }}</td>
-            <td>{{ task.worker }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <TasksTable :data="data" />
 
-    <div class="d-flex justify-content-end mt-3">
-      <nav>
-        <ul class="pagination">
-          <li class="page-item">
-            <button
-              @click="handlePrev"
-              :class="{ disabled: page === 1 }"
-              class="page-link cursor-pointer"
-            >
-              Previous
-            </button>
-          </li>
-          <div class="flex justify-center items-center px-2">
-            <span>{{ page }} / {{ totalPages }}</span>
-          </div>
-          <li class="page-item">
-            <button
-              @click="handleNext"
-              class="page-link cursor-pointer"
-              :class="{ disabled: page === totalPages }"
-            >
-              Next
-            </button>
-          </li>
-        </ul>
+    <div class="flex mt-3 justify-between">
+      <div>
+        <p>
+          <span class="text-foreground">Total</span>:
+          {{ data?.count || 0 }}
+        </p>
+      </div>
+      <nav class="flex">
+        <Button
+          @click="handlePrev"
+          :class="{ disabled: queryParams.page === 1 }"
+          class="page-link cursor-pointer"
+        >
+          Previous
+        </Button>
+        <div class="flex justify-center items-center px-2">
+          <span>{{ queryParams.page }} / {{ totalPages }}</span>
+        </div>
+        <Button
+          @click="handleNext"
+          class="page-link cursor-pointer"
+          :class="{ disabled: queryParams.page === totalPages }"
+        >
+          Next
+        </Button>
       </nav>
     </div>
   </div>
 </template>
-<style scoped>
-.task-name-td {
-  max-width: 300px;
-  overflow-x: scroll;
-  scrollbar-width: thin;
-}
-</style>

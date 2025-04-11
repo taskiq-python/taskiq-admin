@@ -1,9 +1,9 @@
-import { db } from "../db"
-import { tasksTable } from "../db/schema"
-import { takeUniqueOrThrow } from "../utils"
-import { count, eq, desc, like, and } from "drizzle-orm"
+import { db } from '../db'
+import { tasksTable } from '../db/schema'
+import { takeUniqueOrThrow } from '../utils'
+import { count, eq, desc, like, and, asc } from 'drizzle-orm'
 
-export type TaskState = "running" | "success" | "failed" | "abandoned"
+export type TaskState = 'running' | 'success' | 'failed' | 'abandoned'
 
 class TasksRepository {
   async getAll({
@@ -11,19 +11,35 @@ class TasksRepository {
     state,
     limit,
     offset,
+    sortByRuntime,
+    sortByStartedAt
   }: {
     limit: number
     offset: number
     name: string | null
-    state?: "success" | "running" | "failure" | "abandoned"
+    state?: 'success' | 'running' | 'failure' | 'abandoned'
+    sortByRuntime?: 'asc' | 'desc'
+    sortByStartedAt?: 'asc' | 'desc'
   }) {
     const whereCondition = name
       ? like(tasksTable.name, `%${name.toLowerCase()}%`)
       : undefined
 
+    const orderMap = { asc, desc }
+    const sortConditions = []
+    if (sortByRuntime) {
+      sortConditions.push(orderMap[sortByRuntime](tasksTable.executionTime))
+    }
+    if (sortByStartedAt) {
+      sortConditions.push(orderMap[sortByStartedAt](tasksTable.startedAt))
+    }
+    if (sortConditions.length === 0) {
+      sortConditions.push(desc(tasksTable.startedAt))
+    }
+
     const countResult = await db
       .select({
-        count: count(),
+        count: count()
       })
       .from(tasksTable)
       .where(
@@ -37,7 +53,7 @@ class TasksRepository {
       .where(
         and(whereCondition, state ? eq(tasksTable.state, state) : undefined)
       )
-      .orderBy(desc(tasksTable.startedAt))
+      .orderBy(...sortConditions)
       .limit(limit)
       .offset(offset)
 
@@ -62,7 +78,7 @@ class TasksRepository {
     kwargs: Record<string, any>
     executionTime: number | null
     returnValue: { return_value: any } | null
-    state: "success" | "running" | "failure"
+    state: 'success' | 'running' | 'failure'
   }) {
     return db.insert(tasksTable).values(values)
   }
@@ -74,7 +90,7 @@ class TasksRepository {
       executionTime?: number
       finishedAt?: Date | null
       returnValue?: { return_value: any } | null
-      state?: "success" | "running" | "failure" | "abandoned"
+      state?: 'success' | 'running' | 'failure' | 'abandoned'
     }
   ) {
     return db.update(tasksTable).set(values).where(eq(tasksTable.id, taskId))
@@ -83,8 +99,8 @@ class TasksRepository {
   async setAbandoned() {
     return db
       .update(tasksTable)
-      .set({ state: "abandoned" })
-      .where(eq(tasksTable.state, "running"))
+      .set({ state: 'abandoned' })
+      .where(eq(tasksTable.state, 'running'))
   }
 }
 

@@ -1,4 +1,4 @@
-ARG NODE_VERSION=22.12.0
+ARG NODE_VERSION=22.14.0
 
 FROM node:${NODE_VERSION}-slim AS build
 
@@ -12,7 +12,7 @@ WORKDIR /app
 # install dependencies
 COPY ./package.json /app/
 COPY ./pnpm-lock.yaml /app/
-RUN pnpm install --shamefully-hoist
+RUN pnpm install --frozen-lockfile
 
 # copy other files
 COPY . ./

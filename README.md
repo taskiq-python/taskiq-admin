@@ -31,21 +31,22 @@ TASKIQ_ADMIN_API_TOKEN = "..." # or os.getenv() to use .env vars
 
 
 class TaskiqAdminMiddleware(TaskiqMiddleware):
+    def __init__(self, taskiq_broker_name: str | None = None):
+        super().__init__()
+        self.__ta_broker_name = taskiq_broker_name
+
     async def pre_execute(self, message: TaskiqMessage):
         """"""
-
         async with httpx.AsyncClient() as client:
             await client.post(
                 headers={"access-token": TASKIQ_ADMIN_API_TOKEN},
-                url=urljoin(TASKIQ_ADMIN_URL, "/api/tasks/{message.task_id}/started"),
+                url=urljoin(TASKIQ_ADMIN_URL, f"/api/tasks/{message.task_id}/started"),
                 json={
-                    "worker": "WIP",
                     "args": message.args,
                     "kwargs": message.kwargs,
                     "taskName": message.task_name,
-                    "startedAt": datetime.now(UTC)
-                    .replace(tzinfo=None)
-                    .isoformat(),
+                    "worker": self.__ta_broker_name,
+                    "startedAt": datetime.now(UTC).replace(tzinfo=None).isoformat(),
                 },
             )
 
@@ -57,21 +58,17 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         result: TaskiqResult[Any],
     ):
         """"""
-
         async with httpx.AsyncClient() as client:
             await client.post(
                 headers={"access-token": TASKIQ_ADMIN_API_TOKEN},
-                url=urljoin(TASKIQ_ADMIN_URL, "/api/tasks/{message.task_id}/executed"),
+                url=urljoin(TASKIQ_ADMIN_URL, f"/api/tasks/{message.task_id}/executed"),
                 json={
                     "error": result.error
                     if result.error is None
                     else repr(result.error),
-                    "result": result.return_value,
-                    "returnValue": result.return_value,
                     "executionTime": result.execution_time,
-                    "finishedAt": datetime.now(UTC)
-                    .replace(tzinfo=None)
-                    .isoformat(),
+                    "returnValue": {"return_value": result.return_value},
+                    "finishedAt": datetime.now(UTC).replace(tzinfo=None).isoformat(),
                 },
             )
 

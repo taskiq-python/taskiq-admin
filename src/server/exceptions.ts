@@ -1,8 +1,8 @@
 export class NotFoundError extends Error {
-  status: number
+  status: number;
   constructor(message: string, status = 404) {
-    super(message)
-    this.name = "ValidationError"
-    this.status = status
+    super(message);
+    this.name = "ValidationError";
+    this.status = status;
   }
 }
