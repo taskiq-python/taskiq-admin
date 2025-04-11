@@ -39,8 +39,8 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         """"""
         async with httpx.AsyncClient() as client:
             await client.post(
-                headers={"access-token": settings.taskiq_admin_access_token},
-                url=urljoin(settings.taskiq_admin_url, f"/api/tasks/{message.task_id}/started"),
+                headers={"access-token": TASKIQ_ADMIN_API_TOKEN},
+                url=urljoin(TASKIQ_ADMIN_URL, f"/api/tasks/{message.task_id}/started"),
                 json={
                     "args": message.args,
                     "kwargs": message.kwargs,
@@ -60,8 +60,8 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         """"""
         async with httpx.AsyncClient() as client:
             await client.post(
-                headers={"access-token": settings.taskiq_admin_access_token},
-                url=urljoin(settings.taskiq_admin_url, f"/api/tasks/{message.task_id}/executed"),
+                headers={"access-token": TASKIQ_ADMIN_API_TOKEN},
+                url=urljoin(TASKIQ_ADMIN_URL, f"/api/tasks/{message.task_id}/executed"),
                 json={
                     "error": result.error
                     if result.error is None
