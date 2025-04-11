@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import "bootstrap/dist/css/bootstrap.min.css"
+import { Toaster } from 'vue-sonner'
+import Header from '~/components/header.vue'
 </script>
-
 <template>
   <Header />
-  <NuxtPage />
+  <div class="container m-auto">
+    <NuxtPage />
+  </div>
+  <ClientOnly>
+    <Toaster />
+  </ClientOnly>
 </template>

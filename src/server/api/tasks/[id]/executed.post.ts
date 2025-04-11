@@ -1,17 +1,17 @@
 import {
   taskExecutedRequestSchema,
-  taskRouteParamsSchema,
-} from "../../../schemas/tasks"
-import { tasksRepository } from "../../../repositories/tasks"
-import { envVariables } from "~/server/env"
+  taskRouteParamsSchema
+} from '../../../schemas/tasks'
+import { tasksRepository } from '../../../repositories/tasks'
+import { envVariables } from '~/server/env'
 
 export default defineEventHandler(async (event) => {
-  const accessToken = getRequestHeader(event, "access-token")
+  const accessToken = getRequestHeader(event, 'access-token')
   if (!accessToken || accessToken !== envVariables.taskiqAdminApiToken) {
     throw createError({
       status: 401,
-      statusMessage: "Unauthorized",
-      message: "Invalid access token",
+      statusMessage: 'Unauthorized',
+      message: 'Invalid access token'
     })
   }
   const params = await getValidatedRouterParams(
@@ -20,14 +20,14 @@ export default defineEventHandler(async (event) => {
   )
   const body = await readValidatedBody(event, taskExecutedRequestSchema.parse)
 
-  const state = body.error ? "failure" : "success"
+  const state = body.error ? 'failure' : 'success'
 
   await tasksRepository.update(params.id, {
     state: state,
     error: body.error,
     finishedAt: body.finishedAt,
     returnValue: body.returnValue,
-    executionTime: body.executionTime,
+    executionTime: body.executionTime
   })
 
   return { success: true }

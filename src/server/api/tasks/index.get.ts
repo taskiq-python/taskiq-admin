@@ -1,6 +1,6 @@
-import { defineEventHandler, getValidatedQuery } from "h3"
-import { tasksRepository } from "../../repositories/tasks"
-import { getTasksQueryParamsSchema } from "../../schemas/tasks"
+import { defineEventHandler, getValidatedQuery } from 'h3'
+import { tasksRepository } from '../../repositories/tasks'
+import { getTasksQueryParamsSchema } from '../../schemas/tasks'
 
 export default defineEventHandler(async (event) => {
   const query = await getValidatedQuery(event, getTasksQueryParamsSchema.parse)
@@ -10,6 +10,8 @@ export default defineEventHandler(async (event) => {
     limit: query.limit,
     offset: query.offset,
     state: query.state,
+    sortByRuntime: query.sortByRuntime,
+    sortByStartedAt: query.sortByStartedAt
   })
 
   return { tasks, count }
