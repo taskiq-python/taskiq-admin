@@ -75,7 +75,7 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         return super().post_execute(message, result)
 ```
 
-2) Pull the image from DockerHub: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
+2) Pull the image from GitHub Container Registry: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
 
 3) Replace `TASKIQ_ADMIN_API_TOKEN` with any secret enough string and run:
 ```bash
