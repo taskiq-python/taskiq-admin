@@ -75,7 +75,7 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         return super().post_execute(message, result)
 ```
 
-2) Pull the image from DockerHub: `docker pull artur10/taskiq-admin:latest`
+2) Pull the image from DockerHub: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
 
 3) Replace `TASKIQ_ADMIN_API_TOKEN` with any secret enough string and run:
 ```bash
@@ -84,7 +84,7 @@ docker run -d --rm \
   -v ./taskiq-admin-data/:/usr/database/ \
   -e TASKIQ_ADMIN_API_TOKEN=supersecret \
   --name taskiq-admin \
-  artur10/taskiq-admin:latest
+  ghcr.io/taskiq-python/taskiq-admin:latest
 ```
 
 4) Go to `http://localhost:3000/tasks`
@@ -115,7 +115,7 @@ compose.yml file example
       - taskiq_admin
 
   taskiq_admin:
-    image: artur10/taskiq-admin:latest
+    image: ghcr.io/taskiq-python/taskiq-admin:latest
     container_name: taskiq_admin
     ports:
       - 3000:3000
