@@ -81,10 +81,10 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
 ```bash
 docker run -d --rm \
   -p "3000:3000" \
-  -v ./taskiq-admin-data/:/usr/database/ \
-  -e TASKIQ_ADMIN_API_TOKEN=supersecret \
-  --name taskiq-admin \
-  ghcr.io/taskiq-python/taskiq-admin:latest
+  -v "./taskiq-admin-data/:/usr/database/" \
+  -e "TASKIQ_ADMIN_API_TOKEN=supersecret" \
+  --name "taskiq-admin" \
+  "ghcr.io/taskiq-python/taskiq-admin:latest"
 ```
 
 4) Go to `http://localhost:3000/tasks`
@@ -93,15 +93,13 @@ docker run -d --rm \
 
 .env file example:
 ```bash
-...
-TASKIQ_ADMIN_URL=http://taskiq_admin:3000
-TASKIQ_ADMIN_API_TOKEN=supersecret
-...
+TASKIQ_ADMIN_URL="http://taskiq_admin:3000"
+TASKIQ_ADMIN_API_TOKEN="supersecret"
 ```
 
 compose.yml file example
-```shell
-...
+```yaml
+services:
   queue:
     build:
       context: .
@@ -122,8 +120,10 @@ compose.yml file example
     env_file:
       - .env
     volumes:
-      - ./any/suitable/path:/usr/database/
-...
+      - admin_data:/usr/database/
+
+volumes:
+    admin_data:
 ```
 
 ### Development
