@@ -71,9 +71,9 @@ class TasksRepository {
   async create(values: {
     id: string
     name: string
-    worker: string
     startedAt: Date
     args: Array<any>
+    worker: string | null
     finishedAt: Date | null
     kwargs: Record<string, any>
     executionTime: number | null
