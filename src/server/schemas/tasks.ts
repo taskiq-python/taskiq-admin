@@ -1,10 +1,10 @@
 import { z } from 'zod'
 
 export const taskStartedRequestSchema = z.object({
-  worker: z.string(),
   taskName: z.string(),
   startedAt: z.coerce.date(),
   args: z.array(z.unknown()),
+  worker: z.string().nullable(),
   kwargs: z.record(z.string(), z.unknown())
 })
 

@@ -138,7 +138,7 @@ const searchHandler: ((value: string) => void) | undefined =
             />
           </div>
         </TableHead>
-        <TableHead> Worker </TableHead>
+        <TableHead> Broker </TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
