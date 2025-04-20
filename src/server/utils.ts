@@ -1,7 +1,15 @@
-import { NotFoundError } from "./exceptions"
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import { NotFoundError } from './exceptions'
+
+dayjs.extend(utc)
 
 export const takeUniqueOrThrow = <T extends any[]>(values: T): T[number] => {
   if (values.length !== 1)
-    throw new NotFoundError("Found non unique or inexistent value")
+    throw new NotFoundError('Found non unique or inexistent value')
   return values[0]!
+}
+
+export const utcNow = () => {
+  return dayjs.utc()
 }

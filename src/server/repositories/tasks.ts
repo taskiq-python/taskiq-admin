@@ -1,7 +1,7 @@
 import { db } from '../db'
 import { tasksTable } from '../db/schema'
 import { takeUniqueOrThrow } from '../utils'
-import { count, eq, desc, like, and, asc } from 'drizzle-orm'
+import { count, eq, desc, like, and, asc, gte, lte } from 'drizzle-orm'
 
 export type TaskState = 'running' | 'success' | 'failed' | 'abandoned'
 
@@ -12,7 +12,9 @@ class TasksRepository {
     limit,
     offset,
     sortByRuntime,
-    sortByStartedAt
+    sortByStartedAt,
+    startDate,
+    endDate
   }: {
     limit: number
     offset: number
@@ -20,10 +22,22 @@ class TasksRepository {
     state?: 'success' | 'running' | 'failure' | 'abandoned'
     sortByRuntime?: 'asc' | 'desc'
     sortByStartedAt?: 'asc' | 'desc'
+    startDate?: Date
+    endDate?: Date
   }) {
-    const whereCondition = name
-      ? like(tasksTable.name, `%${name.toLowerCase()}%`)
-      : undefined
+    const whereConditions = []
+    if (name) {
+      whereConditions.push(like(tasksTable.name, `%${name.toLowerCase()}%`))
+    }
+    if (state) {
+      whereConditions.push(eq(tasksTable.state, state))
+    }
+    if (startDate) {
+      whereConditions.push(gte(tasksTable.startedAt, startDate))
+    }
+    if (endDate) {
+      whereConditions.push(lte(tasksTable.startedAt, endDate))
+    }
 
     const orderMap = { asc, desc }
     const sortConditions = []
@@ -36,23 +50,21 @@ class TasksRepository {
     if (sortConditions.length === 0) {
       sortConditions.push(desc(tasksTable.startedAt))
     }
+    if (startDate) {
+    }
 
     const countResult = await db
       .select({
         count: count()
       })
       .from(tasksTable)
-      .where(
-        and(whereCondition, state ? eq(tasksTable.state, state) : undefined)
-      )
+      .where(and(...whereConditions))
       .then(takeUniqueOrThrow)
 
     const tasks = await db
       .select()
       .from(tasksTable)
-      .where(
-        and(whereCondition, state ? eq(tasksTable.state, state) : undefined)
-      )
+      .where(and(...whereConditions))
       .orderBy(...sortConditions)
       .limit(limit)
       .offset(offset)

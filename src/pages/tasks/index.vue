@@ -3,9 +3,9 @@ import { useAsyncData } from '#app'
 import { useIntervalFn } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Button } from '@/components/ui/button'
+import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-
+import RangePicker from '~/components/range-picker.vue'
 import type { TaskSelect } from '~/server/db/schema'
 import TasksTable from '~/components/tasks-table.vue'
 
@@ -20,18 +20,36 @@ const searchRef = ref('')
 const queryParams = reactive<{
   page: number
   perPage: number
-  state: string | undefined
-  search: string | undefined
-  sortByRuntime: string | undefined
-  sortByStartedAt: string | undefined
+  state?: string
+  search?: string
+  sortByRuntime?: string
+  sortByStartedAt?: string
+  startDate?: string
+  endDate?: string
 }>({
   page: Number(route.query.page) || 1,
   perPage: Number(route.query.perPage) || 15,
   state: route.query.state?.toString(),
   search: route.query.search?.toString(),
   sortByRuntime: route.query.sortByRuntime?.toString(),
-  sortByStartedAt: route.query.sortByStartedAt?.toString()
+  sortByStartedAt: route.query.sortByStartedAt?.toString(),
+  startDate: route.query.startDate?.toString(),
+  endDate: route.query.endDate?.toString()
 })
+
+watch(
+  () => route.query,
+  async () => {
+    queryParams.page = Number(route.query.page) || 1
+    queryParams.perPage = Number(route.query.perPage) || 15
+    queryParams.state = route.query.state?.toString()
+    queryParams.search = route.query.search?.toString()
+    queryParams.sortByRuntime = route.query.sortByRuntime?.toString()
+    queryParams.sortByStartedAt = route.query.sortByStartedAt?.toString()
+    queryParams.startDate = route.query.startDate?.toString()
+    queryParams.endDate = route.query.endDate?.toString()
+  }
+)
 
 const { data, refresh } = useAsyncData<{ tasks: TaskSelect[]; count: number }>(
   'tasks',
@@ -43,7 +61,9 @@ const { data, refresh } = useAsyncData<{ tasks: TaskSelect[]; count: number }>(
         search: queryParams.search,
         offset: (queryParams.page - 1) * queryParams.perPage,
         sortByRuntime: queryParams.sortByRuntime,
-        sortByStartedAt: queryParams.sortByStartedAt
+        sortByStartedAt: queryParams.sortByStartedAt,
+        startDate: queryParams.startDate,
+        endDate: queryParams.endDate
       }
     }),
   {
@@ -56,11 +76,13 @@ const filtersExist = computed(
     queryParams.state ||
     queryParams.search ||
     queryParams.sortByRuntime ||
-    queryParams.sortByStartedAt
+    queryParams.sortByStartedAt ||
+    queryParams.startDate ||
+    queryParams.endDate
 )
 
 watch(queryParams, async () => {
-  router.replace({
+  router.push({
     path: '/tasks',
     query: {
       ...queryParams
@@ -84,10 +106,13 @@ const searchSubmit = () => {
 }
 
 const clearFilters = () => {
-  queryParams.state = undefined
-  queryParams.search = undefined
-  queryParams.sortByRuntime = undefined
-  queryParams.sortByStartedAt = undefined
+  router.push({
+    path: '/tasks',
+    query: {
+      page: route.query.perPage,
+      perPage: route.query.perPage
+    }
+  })
 }
 
 const sortHandler = (field: 'runtime' | 'startedAt', order: 'asc' | 'desc') => {
@@ -139,8 +164,9 @@ const handlePrev = () => {
           </NuxtLink>
         </Button>
       </div>
-      <div class="row mb-3">
+      <div class="mb-3">
         <div class="flex gap-3">
+          <RangePicker />
           <div>
             <Button
               variant="outline"
@@ -185,7 +211,10 @@ const handlePrev = () => {
       </div>
     </div>
 
-    <TasksTable :data="data" />
+    <TasksTable
+      v-if="data"
+      :data="data"
+    />
 
     <div class="flex mt-3 justify-between">
       <div>
