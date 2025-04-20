@@ -11,7 +11,9 @@ export default defineEventHandler(async (event) => {
     offset: query.offset,
     state: query.state,
     sortByRuntime: query.sortByRuntime,
-    sortByStartedAt: query.sortByStartedAt
+    sortByStartedAt: query.sortByStartedAt,
+    startDate: query.startDate ? new Date(query.startDate) : undefined,
+    endDate: query.endDate ? new Date(query.endDate) : undefined
   })
 
   return { tasks, count }

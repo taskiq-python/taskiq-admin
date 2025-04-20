@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'vue-sonner'
 import { formatDate } from '~/lib/utils'
 import { Button } from '~/components/ui/button'
-import { CopyIcon } from 'lucide-vue-next'
-import { toast } from 'vue-sonner'
+import { CopyIcon, LoaderCircleIcon } from 'lucide-vue-next'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useIntervalFn } from '@vueuse/core'
 
 const route = useRoute()
 const router = useRouter()
-const { data: task, error } = useFetch(`/api/tasks/${route.params.id}`)
+const { data: task, error, refresh } = useFetch(`/api/tasks/${route.params.id}`)
 const copyToClipboard = (value: string) => {
   navigator.clipboard.writeText(value)
 }
+
+useIntervalFn(() => {
+  console.log('REFRESHING...')
+  refresh()
+}, 2000)
 
 const handleCopy = (value: string) => {
   copyToClipboard(value)
@@ -80,7 +86,11 @@ const handleCopy = (value: string) => {
               </tr>
               <tr>
                 <th>Finished At</th>
-                <td>{{ formatDate(String(task.finishedAt)) }}</td>
+                <td v-if="task.state === 'running'">
+                  <LoaderCircleIcon class="animate-spin" />
+                </td>
+                <td v-else-if="task.state === 'abandoned'"></td>
+                <td v-else>{{ formatDate(String(task.finishedAt)) }}</td>
               </tr>
               <tr>
                 <th>Error</th>
@@ -105,6 +115,7 @@ const handleCopy = (value: string) => {
 <style scoped>
 th {
   text-align: left;
+  border-right: 1px solid #ddd;
 }
 th,
 td {
