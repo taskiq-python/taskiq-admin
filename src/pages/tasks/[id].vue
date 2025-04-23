@@ -5,18 +5,24 @@ import { Button } from '~/components/ui/button'
 import { CopyIcon, LoaderCircleIcon } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIntervalFn } from '@vueuse/core'
+import { useRoute, useRouter } from 'vue-router'
+import { useFetch } from '#imports'
+import type { TaskSelect } from '~/server/db/schema'
 
 const route = useRoute()
 const router = useRouter()
-const { data: task, error, refresh } = useFetch(`/api/tasks/${route.params.id}`)
+const {
+  data: task,
+  error,
+  refresh
+} = useFetch<TaskSelect>(`/api/tasks/${route.params.id}`)
 const copyToClipboard = (value: string) => {
   navigator.clipboard.writeText(value)
 }
 
 useIntervalFn(() => {
-  console.log('REFRESHING...')
   refresh()
-}, 2000)
+}, 1500)
 
 const handleCopy = (value: string) => {
   copyToClipboard(value)
@@ -81,8 +87,17 @@ const handleCopy = (value: string) => {
                 <td>{{ task.returnValue }}</td>
               </tr>
               <tr>
+                <th>Queued At</th>
+                <td>{{ formatDate(String(task.queuedAt), true) }}</td>
+              </tr>
+              <tr>
                 <th>Started At</th>
-                <td>{{ formatDate(String(task.startedAt)) }}</td>
+                <td v-if="task.startedAt">
+                  {{ formatDate(String(task.startedAt), true) }}
+                </td>
+                <td v-else>
+                  <LoaderCircleIcon class="animate-spin" />
+                </td>
               </tr>
               <tr>
                 <th>Finished At</th>
@@ -90,7 +105,7 @@ const handleCopy = (value: string) => {
                   <LoaderCircleIcon class="animate-spin" />
                 </td>
                 <td v-else-if="task.state === 'abandoned'"></td>
-                <td v-else>{{ formatDate(String(task.finishedAt)) }}</td>
+                <td v-else>{{ formatDate(String(task.finishedAt), true) }}</td>
               </tr>
               <tr>
                 <th>Error</th>

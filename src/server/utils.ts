@@ -13,3 +13,7 @@ export const takeUniqueOrThrow = <T extends any[]>(values: T): T[number] => {
 export const utcNow = () => {
   return dayjs.utc()
 }
+
+export const capitalize = (text: string) => {
+  return text[0].toUpperCase() + text.slice(1)
+}

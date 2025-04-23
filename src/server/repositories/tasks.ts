@@ -1,9 +1,8 @@
 import { db } from '../db'
 import { tasksTable } from '../db/schema'
 import { takeUniqueOrThrow } from '../utils'
+import { TaskCreate, TaskState } from '~/types'
 import { count, eq, desc, like, and, asc, gte, lte } from 'drizzle-orm'
-
-export type TaskState = 'running' | 'success' | 'failed' | 'abandoned'
 
 class TasksRepository {
   async getAll({
@@ -13,15 +12,17 @@ class TasksRepository {
     offset,
     sortByRuntime,
     sortByStartedAt,
+    sortByQueuedAt,
     startDate,
     endDate
   }: {
     limit: number
     offset: number
     name: string | null
-    state?: 'success' | 'running' | 'failure' | 'abandoned'
+    state?: TaskState
     sortByRuntime?: 'asc' | 'desc'
     sortByStartedAt?: 'asc' | 'desc'
+    sortByQueuedAt?: 'asc' | 'desc'
     startDate?: Date
     endDate?: Date
   }) {
@@ -47,10 +48,11 @@ class TasksRepository {
     if (sortByStartedAt) {
       sortConditions.push(orderMap[sortByStartedAt](tasksTable.startedAt))
     }
-    if (sortConditions.length === 0) {
-      sortConditions.push(desc(tasksTable.startedAt))
+    if (sortByQueuedAt) {
+      sortConditions.push(orderMap[sortByQueuedAt](tasksTable.queuedAt))
     }
-    if (startDate) {
+    if (sortConditions.length === 0) {
+      sortConditions.push(desc(tasksTable.queuedAt))
     }
 
     const countResult = await db
@@ -73,36 +75,53 @@ class TasksRepository {
   }
 
   async getById(taskId: string) {
-    return db
+    const result = await db
       .select()
       .from(tasksTable)
       .where(eq(tasksTable.id, taskId))
-      .then(takeUniqueOrThrow)
+
+    if (result.length > 0) {
+      return result[0]
+    }
+
+    return null
   }
 
-  async create(values: {
-    id: string
-    name: string
-    startedAt: Date
-    args: Array<any>
-    worker: string | null
-    finishedAt: Date | null
-    kwargs: Record<string, any>
-    executionTime: number | null
-    returnValue: { return_value: any } | null
-    state: 'success' | 'running' | 'failure'
-  }) {
+  async create(values: TaskCreate) {
     return db.insert(tasksTable).values(values)
+  }
+
+  async upsert(
+    values: TaskCreate,
+    onConflictSet?: (keyof Pick<TaskCreate, 'startedAt' | 'state'>)[]
+  ) {
+    if (!onConflictSet || onConflictSet?.length === 0) {
+      return db.insert(tasksTable).values(values).onConflictDoNothing({
+        target: tasksTable.id
+      })
+    }
+
+    const set: Record<string, any> = {}
+    if (onConflictSet) {
+      for (const key of onConflictSet) {
+        set[key] = values[key]
+      }
+    }
+    return db.insert(tasksTable).values(values).onConflictDoUpdate({
+      target: tasksTable.id,
+      set
+    })
   }
 
   async update(
     taskId: string,
     values: {
+      startedAt?: Date | null
       error?: string | null
       executionTime?: number
       finishedAt?: Date | null
       returnValue?: { return_value: any } | null
-      state?: 'success' | 'running' | 'failure' | 'abandoned'
+      state?: TaskState
     }
   ) {
     return db.update(tasksTable).set(values).where(eq(tasksTable.id, taskId))

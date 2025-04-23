@@ -15,9 +15,16 @@ import {
   TableHead,
   TableHeader
 } from '~/components/ui/table'
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon } from 'lucide-vue-next'
-import { ArrowUpDownIcon } from 'lucide-vue-next'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  ArrowUpDownIcon
+} from 'lucide-vue-next'
+import SortableArrow from '~/components/sortable-arrow.vue'
 import { toast } from 'vue-sonner'
+import type { QueryParams } from '~/types'
+import { inject } from 'vue'
 
 const { data } = defineProps<{
   data?: {
@@ -26,16 +33,7 @@ const { data } = defineProps<{
   }
 }>()
 
-const queryParams:
-  | {
-      page: number
-      perPage: number
-      state: string | undefined
-      search: string | undefined
-      sortByRuntime: string | undefined
-      sortByStartedAt: string | undefined
-    }
-  | undefined = inject('queryParams')
+const queryParams: QueryParams | undefined = inject('queryParams')
 
 const copyToClipboard = (value: string) => {
   navigator.clipboard.writeText(value)
@@ -48,32 +46,28 @@ const handleCopy = (value: string) => {
   })
 }
 
-const runtimeSortHandler = () => {
-  if (queryParams?.sortByRuntime === 'asc') {
-    sortHandler?.('runtime', 'desc')
-  } else if (queryParams?.sortByRuntime === 'desc') {
-    sortHandler?.('runtime', 'asc')
+const clickSortHandler = (name: 'StartedAt' | 'Runtime' | 'QueuedAt') => {
+  const param = queryParams?.[`sortBy${name}`]
+  if (param === 'asc') {
+    sortHandler?.(name, 'desc')
+  } else if (param) {
+    sortHandler?.(name, 'asc')
   } else {
-    sortHandler?.('runtime', 'asc')
-  }
-}
-
-const startedAtSortHandler = () => {
-  if (queryParams?.sortByStartedAt === 'asc') {
-    sortHandler?.('startedAt', 'desc')
-  } else if (queryParams?.sortByStartedAt === 'desc') {
-    sortHandler?.('startedAt', 'asc')
-  } else {
-    sortHandler?.('startedAt', 'asc')
+    sortHandler?.(name, 'asc')
   }
 }
 
 const sortHandler:
-  | ((field: 'runtime' | 'startedAt', order: 'asc' | 'desc') => void)
+  | ((
+      field: 'Runtime' | 'StartedAt' | 'QueuedAt',
+      order: 'asc' | 'desc'
+    ) => void)
   | undefined = inject('sortHandler')
 
 const stateHandler:
-  | ((state: 'running' | 'success' | 'failure' | 'abandoned') => void)
+  | ((
+      state: 'queued' | 'running' | 'success' | 'failure' | 'abandoned'
+    ) => void)
   | undefined = inject('stateHandler')
 
 const searchHandler: ((value: string) => void) | undefined =
@@ -93,48 +87,29 @@ const searchHandler: ((value: string) => void) | undefined =
         <TableHead> Result </TableHead>
         <TableHead>
           <div class="flex justify-between items-center gap-2">
-            <span>Started</span>
-            <ArrowUpDownIcon
-              v-if="queryParams?.sortByStartedAt === undefined"
-              :size="15"
-              class="cursor-pointer"
-              @click="startedAtSortHandler"
-            />
-            <ArrowUpIcon
-              v-if="queryParams?.sortByStartedAt === 'asc'"
-              :size="15"
-              class="cursor-pointer"
-              @click="startedAtSortHandler"
-            />
-            <ArrowDownIcon
-              v-if="queryParams?.sortByStartedAt === 'desc'"
-              :size="15"
-              class="cursor-pointer"
-              @click="startedAtSortHandler"
+            <span>Queued At</span>
+            <SortableArrow
+              :order="queryParams?.sortByQueuedAt"
+              :clickHandler="() => clickSortHandler('QueuedAt')"
             />
           </div>
         </TableHead>
-        <TableHead> Finished </TableHead>
+        <TableHead>
+          <div class="flex justify-between items-center gap-2">
+            <span>Started At</span>
+            <SortableArrow
+              :order="queryParams?.sortByStartedAt"
+              :clickHandler="() => clickSortHandler('StartedAt')"
+            />
+          </div>
+        </TableHead>
+        <TableHead>Finished At</TableHead>
         <TableHead>
           <div class="flex justify-between items-center gap-2">
             <span>Runtime (s)</span>
-            <ArrowUpDownIcon
-              v-if="queryParams?.sortByRuntime === undefined"
-              class="cursor-pointer"
-              :size="15"
-              @click="runtimeSortHandler"
-            />
-            <ArrowUpIcon
-              v-if="queryParams?.sortByRuntime === 'asc'"
-              :size="15"
-              class="cursor-pointer"
-              @click="runtimeSortHandler"
-            />
-            <ArrowDownIcon
-              v-if="queryParams?.sortByRuntime === 'desc'"
-              :size="15"
-              class="cursor-pointer"
-              @click="runtimeSortHandler"
+            <SortableArrow
+              :order="queryParams?.sortByRuntime"
+              :clickHandler="() => clickSortHandler('Runtime')"
             />
           </div>
         </TableHead>
@@ -173,7 +148,10 @@ const searchHandler: ((value: string) => void) | undefined =
         <TableCell>{{ task.args }}</TableCell>
         <TableCell>{{ limitText(JSON.stringify(task.kwargs), 30) }}</TableCell>
         <TableCell>{{ limitText(formatReturnValue(task), 10) }}</TableCell>
-        <TableCell>{{ formatDate(String(task.startedAt)) }}</TableCell>
+        <TableCell>{{ formatDate(String(task.queuedAt)) }}</TableCell>
+        <TableCell>{{
+          task.startedAt ? formatDate(String(task.startedAt)) : null
+        }}</TableCell>
         <TableCell>
           {{ task.finishedAt ? formatDate(String(task.finishedAt)) : null }}
         </TableCell>

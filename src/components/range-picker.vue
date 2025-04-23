@@ -7,15 +7,12 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '~/components/ui/popover'
-import { RangeCalendar } from '~/components/ui/range-calendar'
 import { type DateRange } from 'reka-ui'
-import {
-  CalendarDate,
-  DateFormatter,
-  type DateValue,
-  getLocalTimeZone
-} from '@internationalized/date'
+import { ref, watch, type Ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { CalendarIcon } from 'lucide-vue-next'
+import { RangeCalendar } from '~/components/ui/range-calendar'
+import { DateFormatter, getLocalTimeZone } from '@internationalized/date'
 
 const route = useRoute()
 const router = useRouter()

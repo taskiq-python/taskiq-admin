@@ -1,9 +1,16 @@
 import {
   taskRouteParamsSchema,
   taskStartedRequestSchema
-} from '../../../schemas/tasks'
-import { tasksRepository } from '../../../repositories/tasks'
+} from '~/server/schemas/tasks'
 import { envVariables } from '~/server/env'
+import { tasksRepository } from '~/server/repositories/tasks'
+import {
+  createError,
+  defineEventHandler,
+  getRequestHeader,
+  getValidatedRouterParams,
+  readValidatedBody
+} from '#imports'
 
 export default defineEventHandler(async (event) => {
   const accessToken = getRequestHeader(event, 'access-token')
@@ -20,19 +27,23 @@ export default defineEventHandler(async (event) => {
   )
   const body = await readValidatedBody(event, taskStartedRequestSchema.parse)
 
-  await tasksRepository.create({
-    finishedAt: null,
-    returnValue: null,
-    executionTime: null,
-    state: 'running',
-    args: body.args,
-    id: params.id,
-    worker: body.worker,
-    kwargs: body.kwargs,
-    name: body.taskName,
-    startedAt: body.startedAt
-  })
-  return {
-    success: true
-  }
+  // Upserts the task if QUEUED event has not been received yet
+  await tasksRepository.upsert(
+    {
+      id: params.id,
+      returnValue: null,
+      executionTime: null,
+      state: 'running',
+      args: body.args,
+      worker: body.worker,
+      kwargs: body.kwargs,
+      name: body.taskName,
+      queuedAt: body.startedAt,
+      startedAt: body.startedAt,
+      finishedAt: null
+    },
+    ['startedAt', 'state']
+  )
+
+  return { success: true }
 })
