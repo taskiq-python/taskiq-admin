@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
     state: query.state,
     sortByRuntime: query.sortByRuntime,
     sortByStartedAt: query.sortByStartedAt,
+    sortByQueuedAt: query.sortByQueuedAt,
     startDate: query.startDate ? new Date(query.startDate) : undefined,
     endDate: query.endDate ? new Date(query.endDate) : undefined
   })

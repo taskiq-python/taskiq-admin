@@ -1,5 +1,5 @@
 import {
-  taskExecutedRequestSchema,
+  taskQueuedRequestSchema,
   taskRouteParamsSchema
 } from '../../../schemas/tasks'
 import { tasksRepository } from '../../../repositories/tasks'
@@ -25,16 +25,20 @@ export default defineEventHandler(async (event) => {
     event,
     taskRouteParamsSchema.parse
   )
-  const body = await readValidatedBody(event, taskExecutedRequestSchema.parse)
+  const body = await readValidatedBody(event, taskQueuedRequestSchema.parse)
 
-  const state = body.error ? 'failure' : 'success'
-
-  await tasksRepository.update(params.id, {
-    state: state,
-    error: body.error,
-    finishedAt: body.finishedAt,
-    returnValue: body.returnValue,
-    executionTime: body.executionTime
+  await tasksRepository.upsert({
+    id: params.id,
+    returnValue: null,
+    executionTime: null,
+    state: 'queued',
+    args: body.args,
+    worker: body.worker,
+    kwargs: body.kwargs,
+    name: body.taskName,
+    startedAt: null,
+    queuedAt: body.queuedAt,
+    finishedAt: null
   })
 
   return { success: true }

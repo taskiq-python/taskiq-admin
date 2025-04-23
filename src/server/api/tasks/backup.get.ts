@@ -2,6 +2,7 @@ import fs from 'fs'
 import { db } from '~/server/db'
 import { envVariables } from '~/server/env'
 import { utcNow } from '~/server/utils'
+import { defineEventHandler, sendStream, setHeader } from '#imports'
 
 export default defineEventHandler(async (event) => {
   // TODO(future): add check if mode is WAL from dotenv

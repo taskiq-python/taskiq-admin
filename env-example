@@ -1,2 +1,3 @@
 DB_FILE_PATH=database/database.db
 BACKUP_FILE_PATH=database/backup.db
+TASKIQ_ADMIN_API_TOKEN=supersecret

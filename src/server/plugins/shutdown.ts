@@ -1,7 +1,8 @@
-import { tasksRepository } from "~/server/repositories/tasks"
+import { defineNitroPlugin } from '#imports'
+import { tasksRepository } from '~/server/repositories/tasks'
 
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook("close", async () => {
+  nitroApp.hooks.hook('close', async () => {
     await tasksRepository.setAbandoned()
   })
 })

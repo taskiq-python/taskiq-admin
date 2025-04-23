@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import type { TaskState } from '~/types'
+
 const props = defineProps<{
-  state: 'success' | 'running' | 'failure' | 'abandoned'
+  state: TaskState
 }>()
 
 const defaultClasses =
   'text-background rounded-xl font-bold text-center py-0.5 px-2 cursor-pointer'
 const bgColorMap = {
+  queued: 'bg-blue-500 dark:text-foreground',
   failure: 'bg-red-500 dark:text-foreground',
   success: 'bg-green-600 dark:text-foreground',
   running: 'bg-yellow-500 dark:text-foreground',

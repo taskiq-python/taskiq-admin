@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { useAsyncData } from '#app'
 import { useIntervalFn } from '@vueuse/core'
-import { computed, ref, watch } from 'vue'
+import { computed, provide, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import RangePicker from '~/components/range-picker.vue'
 import type { TaskSelect } from '~/server/db/schema'
 import TasksTable from '~/components/tasks-table.vue'
+import { StateEnum, type QueryParams, type TaskState } from '~/types'
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+  SelectItem
+} from '~/components/ui/select'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,16 +25,7 @@ if (!route.query.page || !route.query.perPage) {
 }
 
 const searchRef = ref('')
-const queryParams = reactive<{
-  page: number
-  perPage: number
-  state?: string
-  search?: string
-  sortByRuntime?: string
-  sortByStartedAt?: string
-  startDate?: string
-  endDate?: string
-}>({
+const queryParams = reactive<QueryParams>({
   page: Number(route.query.page) || 1,
   perPage: Number(route.query.perPage) || 15,
   state: route.query.state?.toString(),
@@ -46,6 +45,7 @@ watch(
     queryParams.search = route.query.search?.toString()
     queryParams.sortByRuntime = route.query.sortByRuntime?.toString()
     queryParams.sortByStartedAt = route.query.sortByStartedAt?.toString()
+    queryParams.sortByQueuedAt = route.query.sortByQueuedAt?.toString()
     queryParams.startDate = route.query.startDate?.toString()
     queryParams.endDate = route.query.endDate?.toString()
   }
@@ -62,6 +62,7 @@ const { data, refresh } = useAsyncData<{ tasks: TaskSelect[]; count: number }>(
         offset: (queryParams.page - 1) * queryParams.perPage,
         sortByRuntime: queryParams.sortByRuntime,
         sortByStartedAt: queryParams.sortByStartedAt,
+        sortByQueuedAt: queryParams.sortByQueuedAt,
         startDate: queryParams.startDate,
         endDate: queryParams.endDate
       }
@@ -77,6 +78,7 @@ const filtersExist = computed(
     queryParams.search ||
     queryParams.sortByRuntime ||
     queryParams.sortByStartedAt ||
+    queryParams.sortByQueuedAt ||
     queryParams.startDate ||
     queryParams.endDate
 )
@@ -95,9 +97,8 @@ const totalPages = computed(() =>
 )
 
 useIntervalFn(() => {
-  console.log('REFRESHING...')
   refresh()
-}, 2000)
+}, 1500)
 
 const searchSubmit = () => {
   if (searchRef.value) {
@@ -109,26 +110,32 @@ const clearFilters = () => {
   router.push({
     path: '/tasks',
     query: {
-      page: route.query.perPage,
+      page: route.query.page,
       perPage: route.query.perPage
     }
   })
 }
 
-const sortHandler = (field: 'runtime' | 'startedAt', order: 'asc' | 'desc') => {
-  if (field === 'runtime') {
+const sortHandler = (
+  field: 'QueuedAt' | 'Runtime' | 'StartedAt',
+  order: 'asc' | 'desc'
+) => {
+  if (field === 'QueuedAt') {
+    queryParams.sortByQueuedAt = order
+  } else if (field === 'Runtime') {
     queryParams.sortByRuntime = order
-  }
-  if (field === 'startedAt') {
+  } else if (field === 'StartedAt') {
     queryParams.sortByStartedAt = order
+  } else {
+    throw new Error('Invalid sorting key is provided')
   }
 }
-const stateHandler = (
-  state: 'running' | 'success' | 'failure' | 'abandoned'
-) => {
+
+const stateHandler = (state: TaskState) => {
   queryParams.page = 1
   queryParams.state = state
 }
+
 const searchHandler = (value: string) => {
   searchRef.value = value
   queryParams.search = value
@@ -166,6 +173,26 @@ const handlePrev = () => {
       </div>
       <div class="mb-3">
         <div class="flex gap-3">
+          <div class="flex">
+            <Select
+              :model-value="queryParams.state"
+              @update:model-value="(e) => stateHandler(e as TaskState)"
+            >
+              <SelectTrigger class="w-[140px]">
+                <SelectValue placeholder="Select State" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="state in Object.values(StateEnum)"
+                  :key="state"
+                  :value="state"
+                  class="cursor-pointer"
+                >
+                  <TaskState :state="state" />
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <RangePicker />
           <div>
             <Button
