@@ -93,7 +93,10 @@ class TasksRepository {
 
   async upsert(
     values: TaskCreate,
-    onConflictSet?: (keyof Pick<TaskCreate, 'startedAt' | 'state'>)[]
+    onConflictSet?: (keyof Pick<
+      TaskCreate,
+      'startedAt' | 'state' | 'queuedAt'
+    >)[]
   ) {
     if (!onConflictSet || onConflictSet?.length === 0) {
       return db.insert(tasksTable).values(values).onConflictDoNothing({
@@ -132,6 +135,12 @@ class TasksRepository {
       .update(tasksTable)
       .set({ state: 'abandoned' })
       .where(eq(tasksTable.state, 'running'))
+  }
+  async promoteToRunning(id: string, startedAt: Date) {
+    return db
+      .update(tasksTable)
+      .set({ startedAt, state: 'running' })
+      .where(and(eq(tasksTable.id, id), eq(tasksTable.state, 'queued')))
   }
 }
 

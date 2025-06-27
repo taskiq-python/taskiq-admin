@@ -42,8 +42,9 @@ export default defineEventHandler(async (event) => {
       startedAt: body.startedAt,
       finishedAt: null
     },
-    ['startedAt', 'state']
+    ['startedAt']
   )
+  await tasksRepository.promoteToRunning(params.id, body.startedAt)
 
   return { success: true }
 })
