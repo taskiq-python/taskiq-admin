@@ -7,6 +7,7 @@ Standalone admin panel with all data stored in SQLite database
   - [Previews](#previews)
   - [Usage](#usage)
   - [Docker Compose Example](#docker-compose-example)
+  - [Running without Docker](#running-without-docker)
   - [Task States](#task-states)
   - [Development](#development)
 
@@ -187,6 +188,11 @@ services:
 volumes:
     admin_data:
 ```
+
+### Running without Docker
+1) `cp env-example .env`, enter `.env` file and fill in all needed variables
+2) run `make dev` to run it locally in dev mode
+3) run `make prod` to run it locally in prod mode
 
 ### Task States
 Let's assume we have a task 'do_smth', there are all states it can embrace:
