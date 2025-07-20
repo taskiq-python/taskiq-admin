@@ -27,19 +27,22 @@ export default defineEventHandler(async (event) => {
   )
   const body = await readValidatedBody(event, taskQueuedRequestSchema.parse)
 
-  await tasksRepository.upsert({
-    id: params.id,
-    returnValue: null,
-    executionTime: null,
-    state: 'queued',
-    args: body.args,
-    worker: body.worker,
-    kwargs: body.kwargs,
-    name: body.taskName,
-    startedAt: null,
-    queuedAt: body.queuedAt,
-    finishedAt: null
-  })
+  await tasksRepository.upsert(
+    {
+      id: params.id,
+      returnValue: null,
+      executionTime: null,
+      state: 'queued',
+      args: body.args,
+      worker: body.worker,
+      kwargs: body.kwargs,
+      name: body.taskName,
+      startedAt: null,
+      queuedAt: body.queuedAt,
+      finishedAt: null
+    },
+    ['queuedAt']
+  )
 
   return { success: true }
 })

@@ -5,8 +5,6 @@ import { utcNow } from '~/server/utils'
 import { defineEventHandler, sendStream, setHeader } from '#imports'
 
 export default defineEventHandler(async (event) => {
-  // TODO(future): add check if mode is WAL from dotenv
-  // await db.$client.pragma('wal_checkpoint')
   await db.$client.backup(envVariables.backupFilePath)
   const stream = fs.createReadStream(envVariables.backupFilePath)
 
