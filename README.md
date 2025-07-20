@@ -21,17 +21,12 @@ Tasks Page | Task Details Page
 1) Add this middleware to your project:
 
 ```python
-import asyncio
-import logging
-import aiohttp
 from typing import Any
 from urllib.parse import urljoin
 from datetime import datetime, UTC
 
+import httpx
 from taskiq import TaskiqMiddleware, TaskiqResult, TaskiqMessage
-
-logger = logging.getLogger(__name__)
-
 
 class TaskiqAdminMiddleware(TaskiqMiddleware):
     def __init__(
@@ -44,82 +39,63 @@ class TaskiqAdminMiddleware(TaskiqMiddleware):
         self.url = url
         self.api_token = api_token
         self.__ta_broker_name = taskiq_broker_name
-        self._pending: set[asyncio.Task[Any]] = set()
-        self._client: aiohttp.ClientSession | None = None
-
-    @staticmethod
-    def _now_iso() -> str:
-        return datetime.now(UTC).replace(tzinfo=None).isoformat()
-
-    async def startup(self):
-        self._client = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=5),
-        )
-
-    async def shutdown(self):
-        if self._pending:
-            await asyncio.gather(*self._pending, return_exceptions=True)
-        if self._client is not None:
-            await self._client.close()
-
-    def _spawn_request(self, endpoint: str, payload: dict[str, Any]) -> None:
-        async def _send() -> None:
-            session = self._client or aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=5)
-            )
-
-            async with session.post(
-                urljoin(self.url, endpoint),
-                headers={"access-token": self.api_token},
-                json=payload,
-            ) as resp:
-                resp.raise_for_status()
-                if not resp.ok:
-                    logger.error(f"POST {endpoint} - {resp.status}")
-
-        task = asyncio.create_task(_send())
-        self._pending.add(task)
-        task.add_done_callback(self._pending.discard)
 
     async def post_send(self, message):
-        self._spawn_request(
-            f"/api/tasks/{message.task_id}/queued",
-            {
-                "args": message.args,
-                "kwargs": message.kwargs,
-                "queuedAt": self._now_iso(),
-                "taskName": message.task_name,
-                "worker": self.__ta_broker_name,
-            },
-        )
+        now = datetime.now(UTC).replace(tzinfo=None).isoformat()
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                headers={"access-token": self.api_token},
+                url=urljoin(self.url, f"/api/tasks/{message.task_id}/queued"),
+                json={
+                    "args": message.args,
+                    "kwargs": message.kwargs,
+                    "taskName": message.task_name,
+                    "worker": self.__ta_broker_name,
+                    "queuedAt": now,
+                },
+            )
         return super().post_send(message)
 
     async def pre_execute(self, message: TaskiqMessage):
         """"""
-
-        self._spawn_request(
-            f"/api/tasks/{message.task_id}/started",
-            {
-                "args": message.args,
-                "kwargs": message.kwargs,
-                "startedAt": self._now_iso(),
-                "taskName": message.task_name,
-                "worker": self.__ta_broker_name,
-            },
-        )
+        now = datetime.now(UTC).replace(tzinfo=None).isoformat()
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                headers={"access-token": self.api_token},
+                url=urljoin(self.url, f"/api/tasks/{message.task_id}/started"),
+                json={
+                    "startedAt": now,
+                    "args": message.args,
+                    "kwargs": message.kwargs,
+                    "taskName": message.task_name,
+                    "worker": self.__ta_broker_name,
+                },
+            )
         return super().pre_execute(message)
 
-    async def post_execute(self, message: TaskiqMessage, result: TaskiqResult[Any]):
+    async def post_execute(
+        self,
+        message: TaskiqMessage,
+        result: TaskiqResult[Any],
+    ):
         """"""
-        self._spawn_request(
-            f"/api/tasks/{message.task_id}/executed",
-            {
-                "finishedAt": self._now_iso(),
-                "executionTime": result.execution_time,
-                "error": None if result.error is None else repr(result.error),
-                "returnValue": {"return_value": result.return_value},
-            },
-        )
+        now = datetime.now(UTC).replace(tzinfo=None).isoformat()
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                headers={"access-token": self.api_token},
+                url=urljoin(
+                    self.url,
+                    f"/api/tasks/{message.task_id}/executed",
+                ),
+                json={
+                    "finishedAt": now,
+                    "error": result.error
+                    if result.error is None
+                    else repr(result.error),
+                    "executionTime": result.execution_time,
+                    "returnValue": {"return_value": result.return_value},
+                },
+            )
         return super().post_execute(message, result)
 ```
 
