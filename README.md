@@ -18,91 +18,12 @@ Tasks Page | Task Details Page
 
 ### Usage
 
-1) Add this middleware to your project:
+1) Import and connect the middleware to the broker:
 
-```python
-from typing import Any
-from urllib.parse import urljoin
-from datetime import datetime, UTC
-
-import httpx
-from taskiq import TaskiqMiddleware, TaskiqResult, TaskiqMessage
-
-class TaskiqAdminMiddleware(TaskiqMiddleware):
-    def __init__(
-        self,
-        url: str,
-        api_token: str,
-        taskiq_broker_name: str | None = None,
-    ):
-        super().__init__()
-        self.url = url
-        self.api_token = api_token
-        self.__ta_broker_name = taskiq_broker_name
-
-    async def post_send(self, message):
-        now = datetime.now(UTC).replace(tzinfo=None).isoformat()
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                headers={"access-token": self.api_token},
-                url=urljoin(self.url, f"/api/tasks/{message.task_id}/queued"),
-                json={
-                    "args": message.args,
-                    "kwargs": message.kwargs,
-                    "taskName": message.task_name,
-                    "worker": self.__ta_broker_name,
-                    "queuedAt": now,
-                },
-            )
-        return super().post_send(message)
-
-    async def pre_execute(self, message: TaskiqMessage):
-        """"""
-        now = datetime.now(UTC).replace(tzinfo=None).isoformat()
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                headers={"access-token": self.api_token},
-                url=urljoin(self.url, f"/api/tasks/{message.task_id}/started"),
-                json={
-                    "startedAt": now,
-                    "args": message.args,
-                    "kwargs": message.kwargs,
-                    "taskName": message.task_name,
-                    "worker": self.__ta_broker_name,
-                },
-            )
-        return super().pre_execute(message)
-
-    async def post_execute(
-        self,
-        message: TaskiqMessage,
-        result: TaskiqResult[Any],
-    ):
-        """"""
-        now = datetime.now(UTC).replace(tzinfo=None).isoformat()
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                headers={"access-token": self.api_token},
-                url=urljoin(
-                    self.url,
-                    f"/api/tasks/{message.task_id}/executed",
-                ),
-                json={
-                    "finishedAt": now,
-                    "error": result.error
-                    if result.error is None
-                    else repr(result.error),
-                    "executionTime": result.execution_time,
-                    "returnValue": {"return_value": result.return_value},
-                },
-            )
-        return super().post_execute(message, result)
-```
-
-2) Connect the middleware to your broker:
-  
 ```python
 ...
+from taskiq.middlewares.taskiq_admin_middleware import TaskiqAdminMiddleware
+
 broker = (
     RedisStreamBroker(
         url=redis_url,
@@ -120,9 +41,9 @@ broker = (
 ...
 ```
 
-3) Pull the image from GitHub Container Registry: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
+2) Pull the image from GitHub Container Registry: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
 
-4) Replace `TASKIQ_ADMIN_API_TOKEN` with any secret enough string and run:
+3) Replace `TASKIQ_ADMIN_API_TOKEN` with any secret enough string and run:
 ```bash
 docker run -d --rm \
   -p "3000:3000" \
@@ -132,7 +53,7 @@ docker run -d --rm \
   "ghcr.io/taskiq-python/taskiq-admin:latest"
 ```
 
-5) Go to `http://localhost:3000/tasks`
+4) Go to `http://localhost:3000/tasks`
 
 ### Docker Compose Example
 
