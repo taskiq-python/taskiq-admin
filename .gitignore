@@ -1,5 +1,8 @@
 *.db
 dbschema.sql
+*.db-shm
+*.db-wal
+.data
 
 # Nuxt dev/build outputs
 .output
