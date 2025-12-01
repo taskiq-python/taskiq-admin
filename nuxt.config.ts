@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
-  srcDir: 'src/',
+  srcDir: 'app',
   imports: {
     autoImport: false
   },
@@ -13,5 +13,6 @@ export default defineNuxtConfig({
   },
   typescript: {
     strict: true
-  }
+  },
+  modules: ['@nuxt/fonts']
 })
