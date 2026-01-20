@@ -37,6 +37,6 @@ export const getTasksQueryParamsSchema = z.object({
   sortByRuntime: z.enum(['asc', 'desc']).optional(),
   sortByStartedAt: z.enum(['asc', 'desc']).optional(),
   sortByQueuedAt: z.enum(['asc', 'desc']).optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional()
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional()
 })
