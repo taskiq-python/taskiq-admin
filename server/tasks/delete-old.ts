@@ -1,26 +1,33 @@
 import { defineTask } from '#imports'
-import { tasksRepository } from '~/server/repositories/tasks'
-export default defineTask<{ ttlMinutes: number }, { result: string }>({
+import { tasksRepository } from '~~/server/repositories/tasks'
+import { settingsRepository } from '~~/server/repositories/settings'
+
+export default defineTask<{ ttlMinutes?: number }, { result: string }>({
   meta: {
     name: 'delete-old',
     description: 'Delete old task information using the TTL parameter'
   },
-  run({ payload, success }) {
-    const TTL_MINUTES = process.env.TTL_MINUTES
-    if (TTL_MINUTES) {
-      console.log(
-        `🚩 TTL_MINUTES is set to ${TTL_MINUTES}. Running delete query...`
-      )
-      const ttlMinutes = Number(TTL_MINUTES)
-      tasksRepository
-        .deleteOld({ ttlMinutes })
-        .then(() => {
-          console.log('✅ Old tasks deleted successfully')
-        })
-        .catch((err) => {
-          console.error('❌ Failed to delete old tasks', err)
-        })
+  async run({ payload }: { payload: void }) {
+    console.log('🗑️ delete-old task started')
+
+    const settings = await settingsRepository.getAll()
+    if (!settings.delete_old_ttl_minutes) {
+      console.warn('⚠️ delete-old skipped: TTL not configured')
+      return { result: 'Skipped: TTL not configured' }
+    }
+
+    console.log(
+      `🚩 Running delete-old for TTL ${settings.delete_old_ttl_minutes} minute(s) ...`
+    )
+    try {
+      await tasksRepository.deleteOld({
+        ttlMinutes: settings.delete_old_ttl_minutes
+      })
+      console.log('✅ Old tasks deleted successfully')
       return { result: 'Success' }
+    } catch (error) {
+      console.error('❌ Failed to delete old tasks', error)
+      throw error
     }
   }
 })

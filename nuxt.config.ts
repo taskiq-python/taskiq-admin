@@ -14,5 +14,13 @@ export default defineNuxtConfig({
   typescript: {
     strict: true
   },
+  nitro: {
+    experimental: {
+      tasks: true
+    },
+    scheduledTasks: {
+      '* * * * *': ['settings-dispatcher']
+    }
+  },
   modules: ['@nuxt/fonts']
 })
