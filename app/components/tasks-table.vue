@@ -149,7 +149,7 @@ const searchHandler: ((value: string) => void) | undefined =
             :state="task.state"
           />
         </TableCell>
-        <TableCell>{{ task.args }}</TableCell>
+        <TableCell>{{ limitText(JSON.stringify(task.args), 25) }}</TableCell>
         <TableCell>{{ limitText(JSON.stringify(task.kwargs), 25) }}</TableCell>
         <TableCell>{{ limitText(formatReturnValue(task), 10) }}</TableCell>
         <TableCell class="text-center">

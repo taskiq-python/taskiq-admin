@@ -33,3 +33,12 @@ export const tasksTable = sqliteTable(
 )
 
 export type TaskSelect = InferSelectModel<typeof tasksTable>
+
+export const taskiqAdminSettingsTable = sqliteTable('taskiq_admin_settings', {
+  key: text('key').primaryKey(),
+  value: text('value')
+})
+
+export type TaskiqAdminSettings = InferSelectModel<
+  typeof taskiqAdminSettingsTable
+>
