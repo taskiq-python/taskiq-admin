@@ -2,13 +2,31 @@ import Database from 'better-sqlite3'
 import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import { sql } from 'drizzle-orm'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres'
+import { mkdirSync } from 'node:fs'
+import { dirname, isAbsolute, resolve } from 'node:path'
 import { Pool } from 'pg'
 import { envVariables } from '../env'
 import { dbInitializationStatements } from './init'
 
+const isInMemorySqlitePath = (sqlitePath: string) => {
+  return sqlitePath === ':memory:' || sqlitePath.startsWith('file::memory:')
+}
+
+const ensureSqliteFilePath = (sqlitePath: string) => {
+  if (isInMemorySqlitePath(sqlitePath) || sqlitePath.startsWith('file:')) {
+    return sqlitePath
+  }
+
+  const resolvedPath = isAbsolute(sqlitePath)
+    ? sqlitePath
+    : resolve(process.cwd(), sqlitePath)
+  mkdirSync(dirname(resolvedPath), { recursive: true })
+  return resolvedPath
+}
+
 const sqliteClient =
   envVariables.dbDriver === 'sqlite'
-    ? new Database(envVariables.dbFilePath)
+    ? new Database(ensureSqliteFilePath(envVariables.dbFilePath))
     : null
 
 const postgresClient =
@@ -42,7 +60,7 @@ export const backupDatabase = async (backupFilePath: string) => {
   if (envVariables.dbDriver !== 'sqlite') {
     throw new Error('Database backup is supported only with sqlite driver')
   }
-  await sqliteClient!.backup(backupFilePath)
+  await sqliteClient!.backup(ensureSqliteFilePath(backupFilePath))
 }
 
 export const resetDatabaseForTests = async () => {
