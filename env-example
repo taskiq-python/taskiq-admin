@@ -1,3 +1,5 @@
-DB_FILE_PATH=database/database.db
-BACKUP_FILE_PATH=database/backup.db
+TASKIQ_ADMIN_DB_DRIVER=sqlite
+TASKIQ_ADMIN_DB_FILE_PATH=database/database.db
+TASKIQ_ADMIN_DB_URL=postgres://postgres:postgres@localhost:5432/taskiq_admin
+TASKIQ_ADMIN_BACKUP_FILE_PATH=database/backup.db
 TASKIQ_ADMIN_API_TOKEN=supersecret

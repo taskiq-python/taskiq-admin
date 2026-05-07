@@ -8,8 +8,9 @@ await setup({
   server: true, // up the Nitro server
   env: {
     NODE_ENV: 'test',
-    DB_FILE_PATH: ':memory:',
-    BACKUP_FILE_PATH: ':memory:',
+    TASKIQ_ADMIN_DB_DRIVER: 'sqlite',
+    TASKIQ_ADMIN_DB_FILE_PATH: ':memory:',
+    TASKIQ_ADMIN_BACKUP_FILE_PATH: ':memory:',
     TASKIQ_ADMIN_API_TOKEN: 'supersecret'
   }
 })
@@ -56,7 +57,12 @@ test('started → queued → executed saves dates', async () => {
     }
   })
 
-  const task = await $fetch(`/api/tasks/${id}`)
+  const task = await $fetch<{
+    state: string
+    queuedAt: string
+    startedAt: string
+    finishedAt: string
+  }>(`/api/tasks/${id}`)
 
   expect(task?.state).toBe('success')
   expect(task?.queuedAt).toBe(queued.toISOString())
