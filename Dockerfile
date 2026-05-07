@@ -9,8 +9,8 @@ RUN corepack enable
 
 WORKDIR /app
 
-ENV DB_DRIVER=sqlite
-ENV DB_FILE_PATH=/tmp/taskiq-admin.db
+ENV TASKIQ_ADMIN_DB_DRIVER=sqlite
+ENV TASKIQ_ADMIN_DB_FILE_PATH=/tmp/taskiq-admin.db
 
 # install dependencies
 COPY ./package.json /app/
@@ -36,9 +36,9 @@ COPY --from=build /app/entrypoint.sh /usr/app/entrypoint.sh
 
 EXPOSE 3000
 ENV HOST=0.0.0.0 NODE_ENV=production
-ENV DB_DRIVER=sqlite
-ENV DB_FILE_PATH=/usr/database/database.db
-ENV BACKUP_FILE_PATH=/usr/database/backup.db
+ENV TASKIQ_ADMIN_DB_DRIVER=sqlite
+ENV TASKIQ_ADMIN_DB_FILE_PATH=/usr/database/database.db
+ENV TASKIQ_ADMIN_BACKUP_FILE_PATH=/usr/database/backup.db
 
 RUN npm install dotenv
 

@@ -92,9 +92,9 @@ volumes:
 3) run `make prod` to run it locally in prod mode
 
 Environment variables for DB setup:
-- `DB_DRIVER`: required, one of `sqlite` or `postgres`
-- `DB_FILE_PATH`: required when `DB_DRIVER=sqlite`
-- `DB_URL`: required when `DB_DRIVER=postgres`
+- `TASKIQ_ADMIN_DB_DRIVER`: required, one of `sqlite` or `postgres`
+- `TASKIQ_ADMIN_DB_FILE_PATH`: required when `TASKIQ_ADMIN_DB_DRIVER=sqlite`
+- `TASKIQ_ADMIN_DB_URL`: required when `TASKIQ_ADMIN_DB_DRIVER=postgres`
 
 ### Task States
 Let's assume we have a task 'do_smth', there are all states it can embrace:

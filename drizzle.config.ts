@@ -1,26 +1,28 @@
 import 'dotenv/config'
 import { defineConfig } from 'drizzle-kit'
 
-const dbDriver = process.env.DB_DRIVER
+const dbDriver = process.env.TASKIQ_ADMIN_DB_DRIVER
 
 if (!dbDriver) {
-  throw new Error('Environment variable DB_DRIVER is required')
+  throw new Error('Environment variable TASKIQ_ADMIN_DB_DRIVER is required')
 }
 
 if (dbDriver !== 'sqlite' && dbDriver !== 'postgres') {
   throw new Error(
-    'Environment variable DB_DRIVER must be "sqlite" or "postgres"'
+    'Environment variable TASKIQ_ADMIN_DB_DRIVER must be "sqlite" or "postgres"'
   )
 }
 
 const dbUrl =
-  dbDriver === 'sqlite' ? process.env.DB_FILE_PATH : process.env.DB_URL
+  dbDriver === 'sqlite'
+    ? process.env.TASKIQ_ADMIN_DB_FILE_PATH
+    : process.env.TASKIQ_ADMIN_DB_URL
 
 if (!dbUrl) {
   throw new Error(
     dbDriver === 'sqlite'
-      ? 'Environment variable DB_FILE_PATH is required for sqlite driver'
-      : 'Environment variable DB_URL is required for postgres driver'
+      ? 'Environment variable TASKIQ_ADMIN_DB_FILE_PATH is required for sqlite driver'
+      : 'Environment variable TASKIQ_ADMIN_DB_URL is required for postgres driver'
   )
 }
 

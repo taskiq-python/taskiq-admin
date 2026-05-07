@@ -8,9 +8,9 @@ await setup({
   server: true, // up the Nitro server
   env: {
     NODE_ENV: 'test',
-    DB_DRIVER: 'sqlite',
-    DB_FILE_PATH: ':memory:',
-    BACKUP_FILE_PATH: ':memory:',
+    TASKIQ_ADMIN_DB_DRIVER: 'sqlite',
+    TASKIQ_ADMIN_DB_FILE_PATH: ':memory:',
+    TASKIQ_ADMIN_BACKUP_FILE_PATH: ':memory:',
     TASKIQ_ADMIN_API_TOKEN: 'supersecret'
   }
 })

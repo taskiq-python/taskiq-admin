@@ -9,13 +9,13 @@ const getRequiredEnv = (name: string) => {
 }
 
 const getDbDriver = (): DBDriver => {
-  const value = process.env.DB_DRIVER
+  const value = process.env.TASKIQ_ADMIN_DB_DRIVER
   if (!value) {
-    throw new Error('Environment variable DB_DRIVER is required')
+    throw new Error('Environment variable TASKIQ_ADMIN_DB_DRIVER is required')
   }
   if (value !== 'sqlite' && value !== 'postgres') {
     throw new Error(
-      'Environment variable DB_DRIVER must be "sqlite" or "postgres"'
+      'Environment variable TASKIQ_ADMIN_DB_DRIVER must be "sqlite" or "postgres"'
     )
   }
   return value
@@ -27,15 +27,15 @@ export const envVariables = {
   dbDriver,
   dbFilePath:
     dbDriver === 'sqlite'
-      ? getRequiredEnv('DB_FILE_PATH')
-      : process.env.DB_FILE_PATH || '',
+      ? getRequiredEnv('TASKIQ_ADMIN_DB_FILE_PATH')
+      : process.env.TASKIQ_ADMIN_DB_FILE_PATH || '',
   dbUrl:
     dbDriver === 'postgres'
-      ? getRequiredEnv('DB_URL')
-      : process.env.DB_URL || '',
+      ? getRequiredEnv('TASKIQ_ADMIN_DB_URL')
+      : process.env.TASKIQ_ADMIN_DB_URL || '',
   backupFilePath:
     dbDriver === 'sqlite'
-      ? getRequiredEnv('BACKUP_FILE_PATH')
-      : process.env.BACKUP_FILE_PATH || '',
+      ? getRequiredEnv('TASKIQ_ADMIN_BACKUP_FILE_PATH')
+      : process.env.TASKIQ_ADMIN_BACKUP_FILE_PATH || '',
   taskiqAdminApiToken: getRequiredEnv('TASKIQ_ADMIN_API_TOKEN')
 }
