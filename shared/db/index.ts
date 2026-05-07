@@ -1,11 +1,60 @@
 import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
+import { sql } from 'drizzle-orm'
+import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
+import { envVariables } from '../env'
+import { dbInitializationStatements } from './init'
 
-const conn = new Database(process.env.DB_FILE_PATH!)
+const sqliteClient =
+  envVariables.dbDriver === 'sqlite'
+    ? new Database(envVariables.dbFilePath)
+    : null
 
-conn.pragma('synchronous = NORMAL')
-conn.pragma('journal_size_limit = 6144000')
+const postgresClient =
+  envVariables.dbDriver === 'postgres'
+    ? new Pool({ connectionString: envVariables.dbUrl })
+    : null
 
-export const db = drizzle({
-  client: conn
-})
+const sqliteDb = sqliteClient ? drizzleSqlite({ client: sqliteClient }) : null
+const postgresDb = postgresClient
+  ? drizzlePostgres({ client: postgresClient })
+  : null
+
+export const db: any =
+  envVariables.dbDriver === 'sqlite' ? sqliteDb! : postgresDb!
+
+const executeStatement = async (statement: string) => {
+  if (envVariables.dbDriver === 'sqlite') {
+    sqliteClient!.exec(statement)
+    return
+  }
+  await postgresDb!.execute(sql.raw(statement))
+}
+
+export const initializeDatabase = async () => {
+  for (const statement of dbInitializationStatements[envVariables.dbDriver]) {
+    await executeStatement(statement)
+  }
+}
+
+export const backupDatabase = async (backupFilePath: string) => {
+  if (envVariables.dbDriver !== 'sqlite') {
+    throw new Error('Database backup is supported only with sqlite driver')
+  }
+  await sqliteClient!.backup(backupFilePath)
+}
+
+export const resetDatabaseForTests = async () => {
+  if (envVariables.dbDriver === 'sqlite') {
+    sqliteClient!.exec('PRAGMA foreign_keys = OFF')
+    sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_tasks')
+    sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_settings')
+    await initializeDatabase()
+    return
+  }
+
+  await postgresDb!.execute(sql`DROP TABLE IF EXISTS taskiq_admin_tasks`)
+  await postgresDb!.execute(sql`DROP TABLE IF EXISTS taskiq_admin_settings`)
+  await initializeDatabase()
+}

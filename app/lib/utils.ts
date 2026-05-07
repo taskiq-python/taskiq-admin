@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import type { TaskSelect } from '~/server/db/schema'
+import type { TaskSelect } from '../../shared/db/schema'
 
 dayjs.extend(utc)
 

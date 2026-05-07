@@ -1,6 +1,6 @@
 ## Broker-agnostic admin panel for Taskiq
 
-Standalone admin panel with all data stored in SQLite database
+Standalone admin panel with task results storage in SQLite or Postgres database
 
 
 - [Broker-agnostic admin panel for Taskiq](#broker-agnostic-admin-panel-for-taskiq)
@@ -90,6 +90,11 @@ volumes:
 1) `cp env-example .env`, enter `.env` file and fill in all needed variables
 2) run `make dev` to run it locally in dev mode
 3) run `make prod` to run it locally in prod mode
+
+Environment variables for DB setup:
+- `DB_DRIVER`: required, one of `sqlite` or `postgres`
+- `DB_FILE_PATH`: required when `DB_DRIVER=sqlite`
+- `DB_URL`: required when `DB_DRIVER=postgres`
 
 ### Task States
 Let's assume we have a task 'do_smth', there are all states it can embrace:

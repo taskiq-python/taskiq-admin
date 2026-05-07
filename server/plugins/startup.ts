@@ -1,18 +1,15 @@
-import fs from 'fs/promises'
-import { db } from '../../shared/db'
+import { db, initializeDatabase } from '../../shared/db'
 import { defineNitroPlugin } from '#imports'
 import { taskiqAdminSettingsTable } from '~~/shared/db/schema'
 import { SETTINGS } from '~~/shared/constants/settings'
 
-export default defineNitroPlugin(async (nitroApp) => {
+export default defineNitroPlugin(async () => {
   console.log('Running DB initialization...')
-  const sqlScript = await fs.readFile('dbschema.sql', 'utf-8')
-
-  // executing the SQL script to create tables and indexes
-  db.$client.exec(sqlScript)
+  await initializeDatabase()
 
   // seeding default settings
-  db.insert(taskiqAdminSettingsTable)
+  await db
+    .insert(taskiqAdminSettingsTable)
     .values(
       Object.entries(SETTINGS).map(([_, value]) => ({
         key: value.key,
@@ -20,7 +17,6 @@ export default defineNitroPlugin(async (nitroApp) => {
       }))
     )
     .onConflictDoNothing()
-    .run()
 
   console.log('DB initialization completed.')
 })

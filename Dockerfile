@@ -9,6 +9,9 @@ RUN corepack enable
 
 WORKDIR /app
 
+ENV DB_DRIVER=sqlite
+ENV DB_FILE_PATH=/tmp/taskiq-admin.db
+
 # install dependencies
 COPY ./package.json /app/
 COPY ./pnpm-lock.yaml /app/
@@ -33,6 +36,7 @@ COPY --from=build /app/entrypoint.sh /usr/app/entrypoint.sh
 
 EXPOSE 3000
 ENV HOST=0.0.0.0 NODE_ENV=production
+ENV DB_DRIVER=sqlite
 ENV DB_FILE_PATH=/usr/database/database.db
 ENV BACKUP_FILE_PATH=/usr/database/backup.db
 
