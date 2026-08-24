@@ -137,6 +137,10 @@ class TasksRepository {
     return db.update(tasksTable).set(values).where(eq(tasksTable.id, taskId))
   }
 
+  async deleteById(taskId: string) {
+    return db.delete(tasksTable).where(eq(tasksTable.id, taskId))
+  }
+
   async deleteOld({ ttlMinutes }: { ttlMinutes: number }) {
     const now_ = utcNow()
     const dateToCompate = now_.subtract(ttlMinutes, 'minutes').toDate()

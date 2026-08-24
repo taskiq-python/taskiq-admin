@@ -5,6 +5,7 @@ import Theme from '~/components/theme.vue'
 const route = useRoute()
 const navLinks = [
   { label: 'Tasks', to: '/tasks' },
+  { label: 'Schedules', to: '/schedules' },
   { label: 'Settings', to: '/settings' }
 ]
 

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { formatDate } from '~/lib/utils'
 import { Button } from '~/components/ui/button'
-import { CopyIcon, LoaderCircleIcon } from 'lucide-vue-next'
+import { CopyIcon, LoaderCircleIcon, Trash2Icon } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useIntervalFn } from '@vueuse/core'
@@ -43,17 +43,54 @@ const handleCopy = (value: string) => {
     description: 'The ID has been copied to your clipboard'
   })
 }
+
+const handleDelete = async () => {
+  if (!task.value) {
+    return
+  }
+  if (!confirm(`Delete the record of this "${task.value.name}" run?`)) {
+    return
+  }
+  try {
+    await $fetch(`/api/tasks/${task.value.id}`, { method: 'DELETE' })
+    toast.success('Task record deleted')
+    router.push('/tasks')
+  } catch (deleteError: any) {
+    toast.error('Failed to delete', {
+      description: deleteError?.data?.message || String(deleteError)
+    })
+  }
+}
 </script>
 
 <template>
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="flex justify-between items-center mb-4">
       <Button
         class="cursor-pointer"
         @click="router.back()"
       >
         Back to Tasks
       </Button>
+      <div
+        v-if="task"
+        class="flex gap-2"
+      >
+        <RunTaskDialog
+          :initial-task-name="task.name"
+          :initial-args="task.args ?? []"
+          :initial-kwargs="task.kwargs ?? {}"
+          button-label="Run Again"
+        />
+        <Button
+          variant="destructive"
+          class="cursor-pointer"
+          @click="handleDelete"
+        >
+          <Trash2Icon :size="14" />
+          Delete
+        </Button>
+      </div>
     </div>
 
     <div class="flex">

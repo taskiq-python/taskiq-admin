@@ -68,11 +68,25 @@ export const resetDatabaseForTests = async () => {
     sqliteClient!.exec('PRAGMA foreign_keys = OFF')
     sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_tasks')
     sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_settings')
+    sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_schedules')
+    sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_schedule_commands')
+    sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_schedule_sources')
+    sqliteClient!.exec('DROP TABLE IF EXISTS taskiq_admin_registered_tasks')
     await initializeDatabase()
     return
   }
 
   await postgresDb!.execute(sql`DROP TABLE IF EXISTS taskiq_admin_tasks`)
   await postgresDb!.execute(sql`DROP TABLE IF EXISTS taskiq_admin_settings`)
+  await postgresDb!.execute(sql`DROP TABLE IF EXISTS taskiq_admin_schedules`)
+  await postgresDb!.execute(
+    sql`DROP TABLE IF EXISTS taskiq_admin_schedule_commands`
+  )
+  await postgresDb!.execute(
+    sql`DROP TABLE IF EXISTS taskiq_admin_schedule_sources`
+  )
+  await postgresDb!.execute(
+    sql`DROP TABLE IF EXISTS taskiq_admin_registered_tasks`
+  )
   await initializeDatabase()
 }
