@@ -30,12 +30,14 @@ const {
   initialTaskName = '',
   initialArgs = undefined,
   initialKwargs = undefined,
-  buttonLabel = 'Run Task'
+  buttonLabel = 'Run Task',
+  disabled = false
 } = defineProps<{
   initialTaskName?: string
   initialArgs?: Array<any>
   initialKwargs?: Record<string, any>
   buttonLabel?: string
+  disabled?: boolean
 }>()
 
 const refreshHandler: (() => void) | undefined = inject('refreshHandler')
@@ -188,7 +190,10 @@ const handleCreateSchedule = async () => {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="cursor-pointer">
+      <Button
+        class="cursor-pointer"
+        :disabled="disabled"
+      >
         <PlayIcon :size="14" />
         {{ buttonLabel }}
       </Button>

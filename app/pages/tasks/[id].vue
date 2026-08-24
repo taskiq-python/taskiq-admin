@@ -81,10 +81,12 @@ const handleDelete = async () => {
           :initial-args="task.args ?? []"
           :initial-kwargs="task.kwargs ?? {}"
           button-label="Run Again"
+          :disabled="task.state === 'running' || task.state === 'queued'"
         />
         <Button
           variant="destructive"
           class="cursor-pointer"
+          :disabled="task.state === 'running' || task.state === 'queued'"
           @click="handleDelete"
         >
           <Trash2Icon :size="14" />

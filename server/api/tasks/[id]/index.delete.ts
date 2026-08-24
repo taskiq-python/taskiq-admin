@@ -20,6 +20,13 @@ export default defineEventHandler(async (event) => {
       message: 'Task not found'
     })
   }
+  if (task.state === 'running' || task.state === 'queued') {
+    throw createError({
+      status: 409,
+      statusMessage: 'Conflict',
+      message: 'Cannot delete a task that is still running'
+    })
+  }
 
   await tasksRepository.deleteById(params.id)
 
