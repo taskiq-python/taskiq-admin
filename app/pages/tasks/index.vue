@@ -183,6 +183,7 @@ provide('queryParams', queryParams)
 provide('sortHandler', sortHandler)
 provide('stateHandler', stateHandler)
 provide('searchHandler', searchHandler)
+provide('refreshHandler', refresh)
 
 const handleNext = () => {
   if (queryParams.page < totalPages.value) {
@@ -200,7 +201,8 @@ const handlePrev = () => {
 <template>
   <div class="container-fluid py-4">
     <div class="flex justify-between">
-      <div>
+      <div class="flex gap-2">
+        <RunTaskDialog />
         <Button class="btn btn-outline-primary">
           <NuxtLink
             to="/api/tasks/backup"
