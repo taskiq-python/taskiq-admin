@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAsyncData } from '#app'
 import { useIntervalFn } from '@vueuse/core'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { RotateCcwIcon } from 'lucide-vue-next'
 import { formatDate, formatTaskName, limitText } from '~/lib/utils'
@@ -58,6 +58,22 @@ const handleRetry = async (command: ScheduleCommandSelect) => {
 const commandTask = (command: ScheduleCommandSelect) => {
   const taskName = command.payload?.task_name
   return taskName ? formatTaskName(String(taskName)) : '—'
+}
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil((data.value?.count || 0) / perPage))
+)
+
+const handleNext = () => {
+  if (page.value < totalPages.value) {
+    page.value++
+  }
+}
+
+const handlePrev = () => {
+  if (page.value > 1) {
+    page.value--
+  }
 }
 </script>
 
@@ -121,5 +137,27 @@ const commandTask = (command: ScheduleCommandSelect) => {
         </TableRow>
       </TableBody>
     </Table>
+
+    <div class="flex mt-3 justify-end">
+      <nav class="flex">
+        <Button
+          @click="handlePrev"
+          :class="{ disabled: page === 1 }"
+          class="page-link cursor-pointer"
+        >
+          Previous
+        </Button>
+        <div class="flex justify-center items-center px-2">
+          <span>{{ page }} / {{ totalPages }}</span>
+        </div>
+        <Button
+          @click="handleNext"
+          class="page-link cursor-pointer"
+          :class="{ disabled: page === totalPages }"
+        >
+          Next
+        </Button>
+      </nav>
+    </div>
   </div>
 </template>

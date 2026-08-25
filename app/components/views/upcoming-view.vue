@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useAsyncData } from '#app'
 import { useIntervalFn } from '@vueuse/core'
+import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { PlayIcon, Trash2Icon } from 'lucide-vue-next'
 import { formatDate, formatTaskName, limitText } from '~/lib/utils'
@@ -30,6 +31,29 @@ const { data, refresh } = useAsyncData<{ upcoming: UpcomingItem[] }>(
 useIntervalFn(() => {
   refresh()
 }, 3000)
+
+const page = ref(1)
+const perPage = 15
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil((data.value?.upcoming.length || 0) / perPage))
+)
+
+const pageItems = computed(() =>
+  (data.value?.upcoming || []).slice((page.value - 1) * perPage, page.value * perPage)
+)
+
+const handleNext = () => {
+  if (page.value < totalPages.value) {
+    page.value++
+  }
+}
+
+const handlePrev = () => {
+  if (page.value > 1) {
+    page.value--
+  }
+}
 
 const relativeTime = (value: string) => {
   const deltaSeconds = Math.round(
@@ -113,7 +137,7 @@ const handleDelete = async (item: UpcomingItem) => {
       </TableHeader>
       <TableBody>
         <TableRow
-          v-for="item in data?.upcoming"
+          v-for="item in pageItems"
           :key="item.id"
         >
           <TableCell class="font-medium">
@@ -192,5 +216,33 @@ const handleDelete = async (item: UpcomingItem) => {
         </TableRow>
       </TableBody>
     </Table>
+
+    <div class="flex mt-3 justify-between">
+      <div>
+        <p>
+          <span class="text-foreground">Total</span>:
+          {{ data?.upcoming.length || 0 }}
+        </p>
+      </div>
+      <nav class="flex">
+        <Button
+          @click="handlePrev"
+          :class="{ disabled: page === 1 }"
+          class="page-link cursor-pointer"
+        >
+          Previous
+        </Button>
+        <div class="flex justify-center items-center px-2">
+          <span>{{ page }} / {{ totalPages }}</span>
+        </div>
+        <Button
+          @click="handleNext"
+          class="page-link cursor-pointer"
+          :class="{ disabled: page === totalPages }"
+        >
+          Next
+        </Button>
+      </nav>
+    </div>
   </div>
 </template>
