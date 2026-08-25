@@ -194,7 +194,7 @@ const handleDelete = async (item: UpcomingItem) => {
               <Button
                 variant="outline"
                 size="sm"
-                class="cursor-pointer"
+                class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
                 title="Trigger now"
                 :disabled="item.opaque"
                 @click="handleTrigger(item)"
@@ -204,7 +204,7 @@ const handleDelete = async (item: UpcomingItem) => {
               <Button
                 variant="outline"
                 size="sm"
-                class="cursor-pointer"
+                class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
                 :title="
                   item.editable
                     ? 'Delete'

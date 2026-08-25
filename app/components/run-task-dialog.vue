@@ -304,7 +304,7 @@ const handleCreateSchedule = async () => {
       <DialogFooter>
         <Button
           variant="outline"
-          class="cursor-pointer"
+          class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
           :disabled="!hasScheduleSpec"
           :title="
             selectedSource && !selectedSource.editable
@@ -316,7 +316,7 @@ const handleCreateSchedule = async () => {
           Create Schedule
         </Button>
         <Button
-          class="cursor-pointer"
+          class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
           :disabled="hasScheduleSpec"
           :title="
             hasScheduleSpec

@@ -207,7 +207,7 @@ const submitEdit = async () => {
             <Button
               variant="outline"
               size="sm"
-              class="cursor-pointer"
+              class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
               title="Trigger now"
               :disabled="schedule.opaque || hasPendingCommand(schedule)"
               @click="handleTrigger(schedule)"
@@ -217,7 +217,7 @@ const submitEdit = async () => {
             <Button
               variant="outline"
               size="sm"
-              class="cursor-pointer"
+              class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
               :title="
                 schedule.editable
                   ? 'Reschedule'
@@ -236,7 +236,7 @@ const submitEdit = async () => {
             <Button
               variant="outline"
               size="sm"
-              class="cursor-pointer"
+              class="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
               :title="
                 schedule.editable
                   ? 'Delete'
