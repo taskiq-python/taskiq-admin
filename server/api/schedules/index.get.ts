@@ -18,7 +18,9 @@ export default defineEventHandler(async (event) => {
     limit: query.limit,
     offset: query.offset,
     sourceName: query.sourceName,
-    status: query.status
+    status: query.status,
+    kind: query.kind,
+    scheduleId: query.scheduleId
   })
 
   const unresolvedCommands =

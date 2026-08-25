@@ -23,7 +23,9 @@ export default defineEventHandler(async (event) => {
       task_name: body.taskName,
       labels: body.labels,
       args: body.args,
-      kwargs: body.kwargs
+      kwargs: body.kwargs,
+      // Re-running with the same task id restarts that exact task.
+      ...(body.taskId ? { task_id: body.taskId } : {})
     }
   })
 

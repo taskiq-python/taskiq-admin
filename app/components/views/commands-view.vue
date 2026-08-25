@@ -62,14 +62,8 @@ const commandTask = (command: ScheduleCommandSelect) => {
 </script>
 
 <template>
-  <div class="container-fluid py-4">
-    <div class="flex justify-between mb-3">
-      <Button
-        class="btn btn-outline-primary"
-        variant="outline"
-      >
-        <NuxtLink to="/schedules"> Back to Schedules </NuxtLink>
-      </Button>
+  <div>
+    <div class="flex justify-end mb-3">
       <p>
         <span class="text-foreground">Total</span>:
         {{ data?.count || 0 }}

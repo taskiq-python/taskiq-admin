@@ -1,4 +1,14 @@
-import { and, count, desc, eq, like, lte, notInArray } from 'drizzle-orm'
+import {
+  and,
+  count,
+  desc,
+  eq,
+  isNotNull,
+  like,
+  lte,
+  notInArray,
+  or
+} from 'drizzle-orm'
 import { db } from '../../shared/db'
 import { schedulesTable } from '../../shared/db/schema'
 import { takeUniqueOrThrow, utcNow } from '../../shared/utils'
@@ -10,13 +20,17 @@ class SchedulesRepository {
     limit,
     offset,
     sourceName,
-    status
+    status,
+    kind,
+    scheduleId
   }: {
     limit: number
     offset: number
     name: string | null
     sourceName?: string
     status?: ScheduleStatus
+    kind?: 'recurring' | 'oneoff'
+    scheduleId?: string
   }) {
     const whereConditions = []
     if (name) {
@@ -29,6 +43,17 @@ class SchedulesRepository {
     }
     if (status) {
       whereConditions.push(eq(schedulesTable.status, status))
+    }
+    if (kind === 'recurring') {
+      whereConditions.push(
+        or(isNotNull(schedulesTable.cron), isNotNull(schedulesTable.interval))
+      )
+    }
+    if (kind === 'oneoff') {
+      whereConditions.push(isNotNull(schedulesTable.time))
+    }
+    if (scheduleId) {
+      whereConditions.push(eq(schedulesTable.id, scheduleId))
     }
 
     const whereClause = whereConditions.length

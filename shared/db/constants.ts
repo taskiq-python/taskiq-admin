@@ -15,6 +15,7 @@ export const DB_INDEX_NAMES = {
   tasksExecutionTime: 'idx_taskiq_admin_tasks__execution_time',
   tasksName: 'idx_taskiq_admin_tasks__name',
   tasksWorker: 'idx_taskiq_admin_tasks__worker',
+  tasksScheduleId: 'idx_taskiq_admin_tasks__schedule_id',
   schedulesSourceName: 'idx_taskiq_admin_schedules__source_name',
   schedulesStatus: 'idx_taskiq_admin_schedules__status',
   schedulesTaskName: 'idx_taskiq_admin_schedules__task_name',

@@ -6,13 +6,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Checkbox } from '~/components/ui/checkbox'
-import type { ScheduleSelect } from '~~/shared/db/schema'
-import SchedulesTable from '~/components/schedules-table.vue'
-import {
-  ScheduleStatusEnum,
-  type ScheduleQueryParams,
-  type ScheduleStatus
-} from '~~/shared/types'
+import RangePicker from '~/components/range-picker.vue'
+import type { TaskSelect } from '~~/shared/db/schema'
+import TasksTable from '~/components/tasks-table.vue'
+import { StateEnum, type QueryParams, type TaskState } from '~~/shared/types'
 import {
   Select,
   SelectTrigger,
@@ -23,11 +20,11 @@ import {
 
 const route = useRoute()
 const router = useRouter()
-const perPageStorage = useLocalStorage<number>('schedules-per-page', 15)
+const perPageStorage = useLocalStorage<number>('tasks-per-page', 15)
 
 if (!route.query.page || !route.query.perPage) {
   router.push({
-    path: '/schedules',
+    path: '/tasks',
     query: { page: 1, perPage: perPageStorage.value }
   })
 }
@@ -35,12 +32,15 @@ if (!route.query.page || !route.query.perPage) {
 const searchRef = ref('')
 const refreshSeconds = ref(5)
 const refreshActivated = ref(true)
-const queryParams = reactive<ScheduleQueryParams>({
+const queryParams = reactive<QueryParams>({
   page: Number(route.query.page) || 1,
   perPage: Number(route.query.perPage) || perPageStorage.value,
-  sourceName: route.query.sourceName?.toString(),
-  status: route.query.status?.toString(),
-  search: route.query.search?.toString()
+  state: route.query.state?.toString(),
+  search: route.query.search?.toString(),
+  sortByRuntime: route.query.sortByRuntime?.toString(),
+  sortByStartedAt: route.query.sortByStartedAt?.toString(),
+  startDate: route.query.startDate?.toString(),
+  endDate: route.query.endDate?.toString()
 })
 
 watch(
@@ -48,9 +48,13 @@ watch(
   async () => {
     queryParams.page = Number(route.query.page) || 1
     queryParams.perPage = Number(route.query.perPage) || perPageStorage.value
-    queryParams.sourceName = route.query.sourceName?.toString()
-    queryParams.status = route.query.status?.toString()
+    queryParams.state = route.query.state?.toString()
     queryParams.search = route.query.search?.toString()
+    queryParams.sortByRuntime = route.query.sortByRuntime?.toString()
+    queryParams.sortByStartedAt = route.query.sortByStartedAt?.toString()
+    queryParams.sortByQueuedAt = route.query.sortByQueuedAt?.toString()
+    queryParams.startDate = route.query.startDate?.toString()
+    queryParams.endDate = route.query.endDate?.toString()
   }
 )
 
@@ -69,20 +73,20 @@ watch(perPageStorage, (storedPerPage) => {
   }
 })
 
-const { data, refresh } = useAsyncData<{
-  schedules: ScheduleSelect[]
-  count: number
-  pendingCommands: Record<string, string>
-}>(
-  'schedules',
+const { data, refresh } = useAsyncData<{ tasks: TaskSelect[]; count: number }>(
+  'tasks',
   () =>
-    $fetch(`/api/schedules`, {
+    $fetch(`/api/tasks`, {
       params: {
         limit: queryParams.perPage,
+        state: queryParams.state,
+        search: queryParams.search,
         offset: (queryParams.page - 1) * queryParams.perPage,
-        sourceName: queryParams.sourceName,
-        status: queryParams.status,
-        search: queryParams.search
+        sortByRuntime: queryParams.sortByRuntime,
+        sortByStartedAt: queryParams.sortByStartedAt,
+        sortByQueuedAt: queryParams.sortByQueuedAt,
+        startDate: queryParams.startDate,
+        endDate: queryParams.endDate
       }
     }),
   {
@@ -90,18 +94,20 @@ const { data, refresh } = useAsyncData<{
   }
 )
 
-const { data: sourcesData } = useAsyncData<{ sources: string[] }>(
-  'schedule-sources',
-  () => $fetch('/api/schedules/sources')
-)
-
 const filtersExist = computed(
-  () => queryParams.sourceName || queryParams.status || queryParams.search
+  () =>
+    queryParams.state ||
+    queryParams.search ||
+    queryParams.sortByRuntime ||
+    queryParams.sortByStartedAt ||
+    queryParams.sortByQueuedAt ||
+    queryParams.startDate ||
+    queryParams.endDate
 )
 
 watch(queryParams, async () => {
   router.push({
-    path: '/schedules',
+    path: '/tasks',
     query: {
       ...queryParams
     }
@@ -141,7 +147,7 @@ const searchSubmit = () => {
 
 const clearFilters = () => {
   router.push({
-    path: '/schedules',
+    path: '/tasks',
     query: {
       page: route.query.page,
       perPage: route.query.perPage
@@ -149,17 +155,34 @@ const clearFilters = () => {
   })
 }
 
-const sourceHandler = (sourceName: string) => {
-  queryParams.page = 1
-  queryParams.sourceName = sourceName
+const sortHandler = (
+  field: 'QueuedAt' | 'Runtime' | 'StartedAt',
+  order: 'asc' | 'desc'
+) => {
+  if (field === 'QueuedAt') {
+    queryParams.sortByQueuedAt = order
+  } else if (field === 'Runtime') {
+    queryParams.sortByRuntime = order
+  } else if (field === 'StartedAt') {
+    queryParams.sortByStartedAt = order
+  } else {
+    throw new Error('Invalid sorting key is provided')
+  }
 }
 
-const statusHandler = (status: ScheduleStatus) => {
+const stateHandler = (state: TaskState) => {
   queryParams.page = 1
-  queryParams.status = status
+  queryParams.state = state
 }
 
+const searchHandler = (value: string) => {
+  searchRef.value = value
+  queryParams.search = value
+}
 provide('queryParams', queryParams)
+provide('sortHandler', sortHandler)
+provide('stateHandler', stateHandler)
+provide('searchHandler', searchHandler)
 provide('refreshHandler', refresh)
 
 const handleNext = () => {
@@ -176,15 +199,19 @@ const handlePrev = () => {
 </script>
 
 <template>
-  <div class="container-fluid py-4">
+  <div>
     <div class="flex justify-between">
-      <div class="flex gap-2">
-        <RunTaskDialog />
+      <div>
         <Button
           class="btn btn-outline-primary"
           variant="outline"
         >
-          <NuxtLink to="/schedules/commands"> Commands </NuxtLink>
+          <NuxtLink
+            to="/api/tasks/backup"
+            target="_blank"
+          >
+            Backup
+          </NuxtLink>
         </Button>
       </div>
       <div class="mb-3">
@@ -211,44 +238,25 @@ const handlePrev = () => {
           </div>
           <div class="flex">
             <Select
-              :model-value="queryParams.sourceName"
-              @update:model-value="(e) => sourceHandler(e as string)"
+              :model-value="queryParams.state"
+              @update:model-value="(e) => stateHandler(e as TaskState)"
             >
-              <SelectTrigger class="w-[150px] cursor-pointer">
-                <SelectValue placeholder="Select Source" />
+              <SelectTrigger class="w-[140px] cursor-pointer">
+                <SelectValue placeholder="Select State" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem
-                  v-for="source in sourcesData?.sources || []"
-                  :key="source"
-                  :value="source"
+                  v-for="state in Object.values(StateEnum)"
+                  :key="state"
+                  :value="state"
                   class="cursor-pointer"
                 >
-                  {{ source }}
+                  <TaskState :state="state" />
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div class="flex">
-            <Select
-              :model-value="queryParams.status"
-              @update:model-value="(e) => statusHandler(e as ScheduleStatus)"
-            >
-              <SelectTrigger class="w-[130px] cursor-pointer">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="status in Object.values(ScheduleStatusEnum)"
-                  :key="status"
-                  :value="status"
-                  class="cursor-pointer"
-                >
-                  <ScheduleStatus :status="status" />
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <RangePicker />
           <div>
             <Button
               variant="outline"
@@ -263,7 +271,7 @@ const handlePrev = () => {
               type="search"
               name="search"
               class="form-control w-auto"
-              placeholder="Search schedules..."
+              placeholder="Search tasks..."
               v-model="searchRef"
             />
             <Button
@@ -277,7 +285,7 @@ const handlePrev = () => {
       </div>
     </div>
 
-    <SchedulesTable
+    <TasksTable
       v-if="data"
       :data="data"
     />

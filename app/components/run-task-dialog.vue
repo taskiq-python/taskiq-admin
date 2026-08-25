@@ -31,13 +31,16 @@ const {
   initialArgs = undefined,
   initialKwargs = undefined,
   buttonLabel = 'Run Task',
-  disabled = false
+  disabled = false,
+  taskId = undefined
 } = defineProps<{
   initialTaskName?: string
   initialArgs?: Array<any>
   initialKwargs?: Record<string, any>
   buttonLabel?: string
   disabled?: boolean
+  // Re-run the exact task with this id instead of creating a new one
+  taskId?: string
 }>()
 
 const refreshHandler: (() => void) | undefined = inject('refreshHandler')
@@ -133,7 +136,8 @@ const handleRunNow = async () => {
         taskName: taskName.value,
         sourceName: sourceName.value,
         args: parsed.args,
-        kwargs: parsed.kwargs
+        kwargs: parsed.kwargs,
+        taskId
       }
     })
     toast.success('Run requested', {

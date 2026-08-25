@@ -82,6 +82,7 @@ const handleDelete = async () => {
           :initial-kwargs="task.kwargs ?? {}"
           button-label="Run Again"
           :disabled="task.state === 'running' || task.state === 'queued'"
+          :task-id="task.id"
         />
         <Button
           variant="destructive"
@@ -145,6 +146,20 @@ const handleDelete = async () => {
                     v-else
                     class="h-4 w-24"
                   />
+                </td>
+              </tr>
+              <tr v-if="task?.scheduleId">
+                <th>Schedule</th>
+                <td>
+                  <NuxtLink
+                    class="text-primary underline"
+                    :to="{
+                      path: '/tasks',
+                      query: { view: 'scheduled', scheduleId: task.scheduleId }
+                    }"
+                  >
+                    {{ task.scheduleId }}
+                  </NuxtLink>
                 </td>
               </tr>
               <tr>

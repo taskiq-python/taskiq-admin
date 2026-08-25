@@ -52,7 +52,19 @@ const executeStatement = async (statement: string) => {
 
 export const initializeDatabase = async () => {
   for (const statement of dbInitializationStatements[envVariables.dbDriver]) {
-    await executeStatement(statement)
+    try {
+      await executeStatement(statement)
+    } catch (error) {
+      // sqlite has no ADD COLUMN IF NOT EXISTS, so upgrading
+      // an already upgraded database raises a duplicate error.
+      if (
+        statement.includes('ADD COLUMN') &&
+        String(error).includes('duplicate column')
+      ) {
+        continue
+      }
+      throw error
+    }
   }
 }
 

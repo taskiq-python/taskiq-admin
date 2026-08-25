@@ -26,9 +26,11 @@ export const tasksTable = pgTable(
     kwargs: jsonb().$type<Record<string, any>>(),
     returnValue: jsonb('return_value').$type<{
       return_value: any
-    }>()
+    }>(),
+    scheduleId: text('schedule_id')
   },
   (t) => [
+    index(DB_INDEX_NAMES.tasksScheduleId).on(t.scheduleId),
     index(DB_INDEX_NAMES.tasksState).on(t.state),
     index(DB_INDEX_NAMES.tasksQueuedAt).on(t.queuedAt),
     index(DB_INDEX_NAMES.tasksStartedAt).on(t.startedAt),

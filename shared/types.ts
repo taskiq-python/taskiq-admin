@@ -32,6 +32,7 @@ export type TaskCreate = {
   executionTime: number | null
   returnValue: { return_value: any } | null
   state: TaskState
+  scheduleId?: string | null
 }
 
 export const ScheduleStatusEnum = {

@@ -20,9 +20,11 @@ export const tasksTable = sqliteTable(
     kwargs: text({ mode: 'json' }).$type<Record<string, any>>(),
     returnValue: text('return_value', { mode: 'json' }).$type<{
       return_value: any
-    }>()
+    }>(),
+    scheduleId: text('schedule_id')
   },
   (t) => [
+    index(DB_INDEX_NAMES.tasksScheduleId).on(t.scheduleId),
     index(DB_INDEX_NAMES.tasksState).on(t.state),
     index(DB_INDEX_NAMES.tasksQueuedAt).on(t.queuedAt),
     index(DB_INDEX_NAMES.tasksStartedAt).on(t.startedAt),

@@ -213,3 +213,84 @@ test('trigger creates a trigger command', async () => {
     $fetch('/api/schedules/sched-cron/trigger', { method: 'POST' })
   ).rejects.toThrowError()
 })
+
+test('a queued event for a terminal task restarts it (same-id retry)', async () => {
+  const retryId = 'retry-1'
+  await $fetch(`/api/tasks/${retryId}/queued`, {
+    method: 'POST',
+    headers: token,
+    body: {
+      taskName: 'demo:flaky',
+      queuedAt: '2025-01-01T10:00:00.000Z',
+      args: [],
+      kwargs: {},
+      worker: 'w',
+      labels: { schedule_id: 'sched-cron' }
+    }
+  })
+  await $fetch(`/api/tasks/${retryId}/started`, {
+    method: 'POST',
+    headers: token,
+    body: {
+      taskName: 'demo:flaky',
+      startedAt: '2025-01-01T10:00:01.000Z',
+      args: [],
+      kwargs: {},
+      worker: 'w'
+    }
+  })
+  await $fetch(`/api/tasks/${retryId}/executed`, {
+    method: 'POST',
+    headers: token,
+    body: {
+      error: 'ValueError: boom',
+      executionTime: 1,
+      finishedAt: '2025-01-01T10:00:02.000Z',
+      returnValue: null
+    }
+  })
+
+  let task = await $fetch<any>(`/api/tasks/${retryId}`)
+  expect(task.state).toBe('failure')
+  expect(task.scheduleId).toBe('sched-cron')
+
+  // The same task id is queued again: the row restarts its lifecycle.
+  await $fetch(`/api/tasks/${retryId}/queued`, {
+    method: 'POST',
+    headers: token,
+    body: {
+      taskName: 'demo:flaky',
+      queuedAt: '2025-01-01T11:00:00.000Z',
+      args: [],
+      kwargs: {},
+      worker: 'w'
+    }
+  })
+
+  task = await $fetch<any>(`/api/tasks/${retryId}`)
+  expect(task.state).toBe('queued')
+  expect(task.error).toBeNull()
+  expect(task.finishedAt).toBeNull()
+  expect(new Date(task.queuedAt).toISOString()).toBe(
+    '2025-01-01T11:00:00.000Z'
+  )
+})
+
+test('run with taskId puts task_id into the trigger payload', async () => {
+  const run = await $fetch<{ command: any }>('/api/schedules/run', {
+    method: 'POST',
+    body: { taskName: 'demo:flaky', sourceName: 'redis', taskId: 'retry-1' }
+  })
+  expect(run.command.payload.task_id).toBe('retry-1')
+})
+
+test('upcoming lists active schedules with computed next run', async () => {
+  const response = await $fetch<{ upcoming: any[] }>(
+    '/api/schedules/upcoming'
+  )
+  const cron = response.upcoming.find((item) => item.id === 'sched-cron')
+  expect(cron).toBeTruthy()
+  expect(cron.nextRunAt).toBeTruthy()
+  expect(cron.exact).toBe(true)
+  expect(new Date(cron.nextRunAt).getTime()).toBeGreaterThan(Date.now())
+})

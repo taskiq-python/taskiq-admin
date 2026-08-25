@@ -7,7 +7,11 @@ export const dbInitializationStatements: Record<DBDriver, string[]> = {
     'PRAGMA synchronous = NORMAL',
     'PRAGMA journal_size_limit = 6144000',
     `CREATE TABLE IF NOT EXISTS \`${DB_TABLE_NAMES.settings}\` (\`key\` text PRIMARY KEY NOT NULL, \`value\` text)`,
-    `CREATE TABLE IF NOT EXISTS \`${DB_TABLE_NAMES.tasks}\` (\`id\` text PRIMARY KEY NOT NULL, \`name\` text NOT NULL, \`state\` text NOT NULL, \`error\` text, \`worker\` text, \`execution_time\` real, \`queued_at\` integer NOT NULL, \`started_at\` integer, \`finished_at\` integer, \`args\` text, \`kwargs\` text, \`return_value\` text)`,
+    `CREATE TABLE IF NOT EXISTS \`${DB_TABLE_NAMES.tasks}\` (\`id\` text PRIMARY KEY NOT NULL, \`name\` text NOT NULL, \`state\` text NOT NULL, \`error\` text, \`worker\` text, \`execution_time\` real, \`queued_at\` integer NOT NULL, \`started_at\` integer, \`finished_at\` integer, \`args\` text, \`kwargs\` text, \`return_value\` text, \`schedule_id\` text)`,
+    // ADD COLUMN upgrades an existing database; sqlite has no
+    // IF NOT EXISTS for it, the duplicate error is tolerated on init.
+    `ALTER TABLE \`${DB_TABLE_NAMES.tasks}\` ADD COLUMN \`schedule_id\` text`,
+    `CREATE INDEX IF NOT EXISTS \`${DB_INDEX_NAMES.tasksScheduleId}\` ON \`${DB_TABLE_NAMES.tasks}\` (\`schedule_id\`)`,
     `CREATE INDEX IF NOT EXISTS \`${DB_INDEX_NAMES.tasksState}\` ON \`${DB_TABLE_NAMES.tasks}\` (\`state\`)`,
     `CREATE INDEX IF NOT EXISTS \`${DB_INDEX_NAMES.tasksQueuedAt}\` ON \`${DB_TABLE_NAMES.tasks}\` (\`queued_at\`)`,
     `CREATE INDEX IF NOT EXISTS \`${DB_INDEX_NAMES.tasksStartedAt}\` ON \`${DB_TABLE_NAMES.tasks}\` (\`started_at\`)`,
@@ -29,7 +33,9 @@ export const dbInitializationStatements: Record<DBDriver, string[]> = {
   ],
   postgres: [
     `CREATE TABLE IF NOT EXISTS \"${DB_TABLE_NAMES.settings}\" (\"key\" text PRIMARY KEY, \"value\" text)`,
-    `CREATE TABLE IF NOT EXISTS \"${DB_TABLE_NAMES.tasks}\" (\"id\" text PRIMARY KEY, \"name\" text NOT NULL, \"state\" text NOT NULL, \"error\" text, \"worker\" text, \"execution_time\" real, \"queued_at\" timestamp with time zone NOT NULL, \"started_at\" timestamp with time zone, \"finished_at\" timestamp with time zone, \"args\" jsonb, \"kwargs\" jsonb, \"return_value\" jsonb)`,
+    `CREATE TABLE IF NOT EXISTS \"${DB_TABLE_NAMES.tasks}\" (\"id\" text PRIMARY KEY, \"name\" text NOT NULL, \"state\" text NOT NULL, \"error\" text, \"worker\" text, \"execution_time\" real, \"queued_at\" timestamp with time zone NOT NULL, \"started_at\" timestamp with time zone, \"finished_at\" timestamp with time zone, \"args\" jsonb, \"kwargs\" jsonb, \"return_value\" jsonb, \"schedule_id\" text)`,
+    `ALTER TABLE \"${DB_TABLE_NAMES.tasks}\" ADD COLUMN IF NOT EXISTS \"schedule_id\" text`,
+    `CREATE INDEX IF NOT EXISTS \"${DB_INDEX_NAMES.tasksScheduleId}\" ON \"${DB_TABLE_NAMES.tasks}\" (\"schedule_id\")`,
     `CREATE INDEX IF NOT EXISTS \"${DB_INDEX_NAMES.tasksState}\" ON \"${DB_TABLE_NAMES.tasks}\" (\"state\")`,
     `CREATE INDEX IF NOT EXISTS \"${DB_INDEX_NAMES.tasksQueuedAt}\" ON \"${DB_TABLE_NAMES.tasks}\" (\"queued_at\")`,
     `CREATE INDEX IF NOT EXISTS \"${DB_INDEX_NAMES.tasksStartedAt}\" ON \"${DB_TABLE_NAMES.tasks}\" (\"started_at\")`,

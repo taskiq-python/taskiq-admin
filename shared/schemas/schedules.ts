@@ -45,7 +45,9 @@ export const getSchedulesQueryParamsSchema = z.object({
   limit: z.coerce.number().gte(0),
   offset: z.coerce.number().gte(0),
   sourceName: z.string().optional(),
-  status: z.enum(['active', 'removed']).optional()
+  status: z.enum(['active', 'removed']).optional(),
+  kind: z.enum(['recurring', 'oneoff']).optional(),
+  scheduleId: z.string().optional()
 })
 
 export const rescheduleRequestSchema = z.object({
@@ -95,5 +97,6 @@ export const runTaskRequestSchema = z.object({
   sourceName: z.string(),
   args: z.array(z.unknown()).default([]),
   kwargs: z.record(z.string(), z.unknown()).default({}),
-  labels: z.record(z.string(), z.unknown()).default({})
+  labels: z.record(z.string(), z.unknown()).default({}),
+  taskId: z.string().optional()
 })
