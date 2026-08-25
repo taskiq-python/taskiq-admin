@@ -205,7 +205,11 @@ const handleDelete = async (item: UpcomingItem) => {
                 variant="outline"
                 size="sm"
                 class="cursor-pointer"
-                title="Delete"
+                :title="
+                  item.editable
+                    ? 'Delete'
+                    : 'Defined in code (read-only source), remove its schedule label instead'
+                "
                 :disabled="!item.editable"
                 @click="handleDelete(item)"
               >

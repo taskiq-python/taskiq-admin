@@ -218,7 +218,11 @@ const submitEdit = async () => {
               variant="outline"
               size="sm"
               class="cursor-pointer"
-              title="Reschedule"
+              :title="
+                schedule.editable
+                  ? 'Reschedule'
+                  : 'Defined in code (read-only source), cannot be edited'
+              "
               :disabled="
                 !schedule.editable ||
                 schedule.status !== 'active' ||
@@ -233,7 +237,11 @@ const submitEdit = async () => {
               variant="outline"
               size="sm"
               class="cursor-pointer"
-              title="Delete"
+              :title="
+                schedule.editable
+                  ? 'Delete'
+                  : 'Defined in code (read-only source), remove its schedule label instead'
+              "
               :disabled="
                 !schedule.editable ||
                 schedule.status !== 'active' ||
