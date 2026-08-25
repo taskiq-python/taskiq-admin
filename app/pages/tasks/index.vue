@@ -13,7 +13,7 @@ const tabs = [
   { key: 'runs', label: 'Runs' },
   { key: 'scheduled', label: 'Scheduled' },
   { key: 'upcoming', label: 'Upcoming' },
-  { key: 'commands', label: 'Commands' }
+  { key: 'audit', label: 'Audit' }
 ] as const
 
 const currentView = computed(() => route.query.view?.toString() || 'runs')
@@ -51,6 +51,6 @@ const switchView = (view: string) => {
     <RunsView v-if="currentView === 'runs'" />
     <ScheduledView v-else-if="currentView === 'scheduled'" />
     <UpcomingView v-else-if="currentView === 'upcoming'" />
-    <CommandsView v-else-if="currentView === 'commands'" />
+    <CommandsView v-else-if="currentView === 'audit'" />
   </div>
 </template>

@@ -71,7 +71,7 @@ const commandTask = (command: ScheduleCommandSelect) => {
     </div>
 
     <Table>
-      <TableCaption>Schedule Commands</TableCaption>
+      <TableCaption>Audit Log</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead> Type </TableHead>
