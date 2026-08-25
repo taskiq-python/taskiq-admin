@@ -57,6 +57,15 @@ const interval = ref('')
 
 watch(open, (isOpen) => {
   if (!isOpen) {
+    // The next opening always starts from a clean state
+    taskName.value = ''
+    sourceName.value = ''
+    argsText.value = '[]'
+    kwargsText.value = '{}'
+    cron.value = ''
+    cronOffset.value = ''
+    time.value = ''
+    interval.value = ''
     return
   }
   if (initialTaskName) {
