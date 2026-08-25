@@ -86,6 +86,12 @@ const selectedSource = computed(() =>
   sourcesData.value?.sources.find((source) => source.name === sourceName.value)
 )
 
+// Filling a schedule field switches the dialog into scheduling
+// mode, so exactly one of the two buttons is active at a time.
+const hasScheduleSpec = computed(() =>
+  Boolean(cron.value || time.value || interval.value)
+)
+
 const parseArguments = () => {
   let args: unknown
   let kwargs: unknown
@@ -299,7 +305,7 @@ const handleCreateSchedule = async () => {
         <Button
           variant="outline"
           class="cursor-pointer"
-          :disabled="!cron && !time && !interval"
+          :disabled="!hasScheduleSpec"
           :title="
             selectedSource && !selectedSource.editable
               ? 'The selected source is read-only'
@@ -311,6 +317,12 @@ const handleCreateSchedule = async () => {
         </Button>
         <Button
           class="cursor-pointer"
+          :disabled="hasScheduleSpec"
+          :title="
+            hasScheduleSpec
+              ? 'Clear the schedule fields to run the task now'
+              : 'Run the task now'
+          "
           @click="handleRunNow"
         >
           Run Now
