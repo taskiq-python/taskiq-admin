@@ -40,7 +40,8 @@ export default defineEventHandler(async (event) => {
       name: body.taskName,
       queuedAt: body.startedAt,
       startedAt: body.startedAt,
-      finishedAt: null
+      finishedAt: null,
+      scheduleId: (body.labels?.schedule_id as string | undefined) ?? null
     },
     ['startedAt']
   )

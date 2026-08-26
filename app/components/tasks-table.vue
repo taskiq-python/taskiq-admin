@@ -125,11 +125,26 @@ const searchHandler: ((value: string) => void) | undefined =
         v-for="task in data?.tasks"
         :key="task.id"
       >
-        <TableCell
-          class="font-medium cursor-pointer"
-          @click="searchHandler?.(formatTaskName(task.name))"
-        >
-          {{ formatTaskName(task.name) }}
+        <TableCell class="font-medium">
+          <div class="flex items-center gap-2">
+            <span
+              class="cursor-pointer"
+              @click="searchHandler?.(formatTaskName(task.name))"
+            >
+              {{ formatTaskName(task.name) }}
+            </span>
+            <NuxtLink
+              v-if="task.scheduleId"
+              :to="{
+                path: '/tasks',
+                query: { view: 'scheduled', scheduleId: task.scheduleId }
+              }"
+              class="text-xs text-muted-foreground border rounded px-1 no-underline hover:text-foreground"
+              title="Started by a schedule"
+            >
+              scheduled
+            </NuxtLink>
+          </div>
         </TableCell>
         <TableCell class="underline">
           <div class="flex justify-between items-center gap-1">

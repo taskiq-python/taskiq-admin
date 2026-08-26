@@ -2,7 +2,9 @@ import { db } from '../../shared/db'
 import { tasksTable } from '../../shared/db/schema'
 import { takeUniqueOrThrow, utcNow } from '../../shared/utils'
 import { TaskCreate, TaskState } from '../../shared/types'
-import { count, eq, desc, like, and, asc, gte, lte } from 'drizzle-orm'
+import { count, eq, desc, like, and, asc, gte, inArray, lte } from 'drizzle-orm'
+
+const TERMINAL_STATES: TaskState[] = ['success', 'failure', 'abandoned']
 
 class TasksRepository {
   async getAll({
@@ -123,6 +125,33 @@ class TasksRepository {
     })
   }
 
+  // A queued event for a task in a terminal state is a re-run
+  // (same task id): the row restarts its lifecycle from scratch.
+  async requeue(values: TaskCreate) {
+    await db
+      .update(tasksTable)
+      .set({
+        state: 'queued',
+        queuedAt: values.queuedAt,
+        args: values.args,
+        kwargs: values.kwargs,
+        worker: values.worker,
+        scheduleId: values.scheduleId ?? null,
+        startedAt: null,
+        finishedAt: null,
+        error: null,
+        executionTime: null,
+        returnValue: null
+      })
+      .where(
+        and(
+          eq(tasksTable.id, values.id),
+          inArray(tasksTable.state, TERMINAL_STATES)
+        )
+      )
+    return this.upsert(values, ['queuedAt'])
+  }
+
   async update(
     taskId: string,
     values: {
@@ -137,6 +166,10 @@ class TasksRepository {
     return db.update(tasksTable).set(values).where(eq(tasksTable.id, taskId))
   }
 
+  async deleteById(taskId: string) {
+    return db.delete(tasksTable).where(eq(tasksTable.id, taskId))
+  }
+
   async deleteOld({ ttlMinutes }: { ttlMinutes: number }) {
     const now_ = utcNow()
     const dateToCompate = now_.subtract(ttlMinutes, 'minutes').toDate()
@@ -149,11 +182,26 @@ class TasksRepository {
       .set({ state: 'abandoned' })
       .where(eq(tasksTable.state, 'running'))
   }
+  // Promotes from queued, and also from a terminal state so
+  // a re-run whose started event arrives before its queued
+  // event still restarts the row's lifecycle.
   async promoteToRunning(id: string, startedAt: Date) {
     return db
       .update(tasksTable)
-      .set({ startedAt, state: 'running' })
-      .where(and(eq(tasksTable.id, id), eq(tasksTable.state, 'queued')))
+      .set({
+        startedAt,
+        state: 'running',
+        finishedAt: null,
+        error: null,
+        executionTime: null,
+        returnValue: null
+      })
+      .where(
+        and(
+          eq(tasksTable.id, id),
+          inArray(tasksTable.state, ['queued', ...TERMINAL_STATES])
+        )
+      )
   }
 }
 

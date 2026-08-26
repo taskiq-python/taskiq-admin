@@ -1,6 +1,8 @@
 import { defineTask } from '#imports'
 import { tasksRepository } from '~~/server/repositories/tasks'
 import { settingsRepository } from '~~/server/repositories/settings'
+import { schedulesRepository } from '~~/server/repositories/schedules'
+import { scheduleCommandsRepository } from '~~/server/repositories/schedule-commands'
 
 export default defineTask<{ ttlMinutes?: number }, { result: string }>({
   meta: {
@@ -21,6 +23,12 @@ export default defineTask<{ ttlMinutes?: number }, { result: string }>({
     )
     try {
       await tasksRepository.deleteOld({
+        ttlMinutes: settings.delete_old_ttl_minutes
+      })
+      await schedulesRepository.deleteOldRemoved({
+        ttlMinutes: settings.delete_old_ttl_minutes
+      })
+      await scheduleCommandsRepository.deleteOldResolved({
         ttlMinutes: settings.delete_old_ttl_minutes
       })
       console.log('✅ Old tasks deleted successfully')

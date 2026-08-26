@@ -5,7 +5,8 @@ export const taskQueuedRequestSchema = z.object({
   queuedAt: z.coerce.date(),
   args: z.array(z.unknown()),
   worker: z.string().nullable(),
-  kwargs: z.record(z.string(), z.unknown())
+  kwargs: z.record(z.string(), z.unknown()),
+  labels: z.record(z.string(), z.unknown()).optional()
 })
 
 export const taskStartedRequestSchema = z.object({
@@ -13,7 +14,8 @@ export const taskStartedRequestSchema = z.object({
   startedAt: z.coerce.date(),
   args: z.array(z.unknown()),
   worker: z.string().nullable(),
-  kwargs: z.record(z.string(), z.unknown())
+  kwargs: z.record(z.string(), z.unknown()),
+  labels: z.record(z.string(), z.unknown()).optional()
 })
 
 export const taskExecutedRequestSchema = z.object({
