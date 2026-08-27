@@ -2,7 +2,6 @@
 
 Standalone admin panel with task results storage in SQLite or Postgres database
 
-
 - [Broker-agnostic admin panel for Taskiq](#broker-agnostic-admin-panel-for-taskiq)
   - [Previews](#previews)
   - [Usage](#usage)
@@ -12,13 +11,14 @@ Standalone admin panel with task results storage in SQLite or Postgres database
   - [Development](#development)
 
 ### Previews
-Tasks Page | Task Details Page
-:-------------------------:|:-------------------------:
-![Alt text](./docs/images/preview1.png) | ![Alt text](./docs/images/preview2.png)
+
+|               Tasks Page                |            Task Details Page            |
+| :-------------------------------------: | :-------------------------------------: |
+| ![Alt text](./docs/images/preview1.png) | ![Alt text](./docs/images/preview2.png) |
 
 ### Usage
 
-1) Import and connect the middleware to the broker:
+1. Import and connect the middleware to the broker:
 
 ```python
 ...
@@ -41,9 +41,10 @@ broker = (
 ...
 ```
 
-2) Pull the image from GitHub Container Registry: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
+2. Pull the image from GitHub Container Registry: `docker pull ghcr.io/taskiq-python/taskiq-admin:latest`
 
-3) Replace `TASKIQ_ADMIN_API_TOKEN` with any secret enough string and run:
+3. Replace `TASKIQ_ADMIN_API_TOKEN` with any secret enough string and run:
+
 ```bash
 docker run -d --rm \
   -p "3000:3000" \
@@ -53,7 +54,7 @@ docker run -d --rm \
   "ghcr.io/taskiq-python/taskiq-admin:latest"
 ```
 
-4) Go to `http://localhost:3000/tasks`
+4. Go to `http://localhost:3000/tasks`
 
 ### Docker Compose Example
 
@@ -83,28 +84,51 @@ services:
       - admin_data:/usr/database/
 
 volumes:
-    admin_data:
+  admin_data:
 ```
 
 ### Running without Docker
-1) `cp env-example .env`, enter `.env` file and fill in all needed variables
-2) run `make dev` to run it locally in dev mode
-3) run `make prod` to run it locally in prod mode
+
+1. `cp env-example .env`, enter `.env` file and fill in all needed variables
+2. run `make dev` to run it locally in dev mode
+3. run `make prod` to run it locally in prod mode
 
 Environment variables for DB setup:
+
 - `TASKIQ_ADMIN_DB_DRIVER`: required, one of `sqlite` or `postgres`
 - `TASKIQ_ADMIN_DB_FILE_PATH`: required when `TASKIQ_ADMIN_DB_DRIVER=sqlite`
 - `TASKIQ_ADMIN_DB_URL`: required when `TASKIQ_ADMIN_DB_DRIVER=postgres`
 
+#### Postgres and `pg_trgm` (optional)
+
+Task name search uses a case-insensitive substring match. On postgres it is backed by a
+`pg_trgm` GIN index, which taskiq-admin creates on startup.
+
+This is a performance optimization, not a requirement: if the extension cannot be created,
+search keeps returning the same results, it just does a sequential scan over the tasks table.
+A warning is logged once at startup when that happens.
+
+`pg_trgm` ships with the standard `postgresql-contrib` package (included in the official
+postgres Docker images) and is a trusted extension since postgres 13, so the database owner
+can create it without superuser rights. If the role in `TASKIQ_ADMIN_DB_URL` is neither owner
+nor superuser, create it once by hand:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+```
+
 ### Task States
+
 Let's assume we have a task 'do_smth', there are all states it can embrace:
-1) `queued` - the task has been sent to the queue without an error
-2) `running` - the task is grabbed by a worker and is being processed
-3) `success` - the task is fully processed without any errors
-4) `failure` - an error occured during the task processing
-5) `abandoned` - taskiq-admin sets all 'running' tasks as 'abandoned' if there was a downtime between the time these tasks were in 'running' state and the time of next startup of taskiq-admin
+
+1. `queued` - the task has been sent to the queue without an error
+2. `running` - the task is grabbed by a worker and is being processed
+3. `success` - the task is fully processed without any errors
+4. `failure` - an error occured during the task processing
+5. `abandoned` - taskiq-admin sets all 'running' tasks as 'abandoned' if there was a downtime between the time these tasks were in 'running' state and the time of next startup of taskiq-admin
 
 ### Development
-1) Run `pnpm install` to install all dependencies
-2) Run `pnpm db:push` to create the sqlite database if needed
-3) Run `pnpm dev` to run the project
+
+1. Run `pnpm install` to install all dependencies
+2. Run `pnpm db:push` to create the sqlite database if needed
+3. Run `pnpm dev` to run the project
