@@ -1,4 +1,3 @@
-// tests/task-flow.nuxt.spec.ts
 import { setup, $fetch } from '@nuxt/test-utils'
 import { resolve } from 'path'
 import { expect, test } from 'vitest'

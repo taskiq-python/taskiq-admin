@@ -51,8 +51,20 @@ const executeStatement = async (statement: string) => {
 }
 
 export const initializeDatabase = async () => {
+  const loggedWarnings = new Set<string>()
   for (const statement of dbInitializationStatements[envVariables.dbDriver]) {
-    await executeStatement(statement)
+    if (typeof statement === 'string') {
+      await executeStatement(statement)
+      continue
+    }
+    try {
+      await executeStatement(statement.sql)
+    } catch {
+      if (!loggedWarnings.has(statement.warning)) {
+        loggedWarnings.add(statement.warning)
+        console.warn(`[taskiq-admin] ${statement.warning}`)
+      }
+    }
   }
 }
 

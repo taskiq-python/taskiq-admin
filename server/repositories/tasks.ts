@@ -1,8 +1,25 @@
 import { db } from '../../shared/db'
 import { tasksTable } from '../../shared/db/schema'
+import { DB_TABLE_NAMES } from '../../shared/db/constants'
+import { envVariables } from '../../shared/env'
 import { takeUniqueOrThrow, utcNow } from '../../shared/utils'
 import { TaskCreate, TaskState } from '../../shared/types'
-import { count, eq, desc, like, and, asc, gte, lte } from 'drizzle-orm'
+import { count, eq, desc, and, asc, gte, lte, sql, like } from 'drizzle-orm'
+
+const escapeLikePattern = (value: string) =>
+  value.replace(/[\\%_]/g, (character) => `\\${character}`)
+
+const buildNameCondition = (name: string) => {
+  if (envVariables.dbDriver === 'postgres') {
+    const pattern = `%${escapeLikePattern(name.toLowerCase())}%`
+    return like(tasksTable.name, pattern)
+  }
+  // wrap user input as an FTS5 phrase query (escape embedded double quotes by doubling)
+  const ftsQuery = `"${name.replace(/"/g, '""')}"`
+  return sql`rowid IN (SELECT rowid FROM ${sql.identifier(
+    DB_TABLE_NAMES.tasksFts
+  )} WHERE name MATCH ${ftsQuery})`
+}
 
 class TasksRepository {
   async getAll({
@@ -28,7 +45,7 @@ class TasksRepository {
   }) {
     const whereConditions = []
     if (name) {
-      whereConditions.push(like(tasksTable.name, `%${name.toLowerCase()}%`))
+      whereConditions.push(buildNameCondition(name))
     }
     if (state) {
       whereConditions.push(eq(tasksTable.state, state))

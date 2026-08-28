@@ -23,13 +23,14 @@ export const tasksTable = sqliteTable(
     }>()
   },
   (t) => [
-    index(DB_INDEX_NAMES.tasksState).on(t.state),
     index(DB_INDEX_NAMES.tasksQueuedAt).on(t.queuedAt),
     index(DB_INDEX_NAMES.tasksStartedAt).on(t.startedAt),
     index(DB_INDEX_NAMES.tasksFinishedAt).on(t.finishedAt),
     index(DB_INDEX_NAMES.tasksExecutionTime).on(t.executionTime),
-    index(DB_INDEX_NAMES.tasksName).on(sql`name COLLATE NOCASE`),
-    index(DB_INDEX_NAMES.tasksWorker).on(sql`worker COLLATE NOCASE`)
+    index(DB_INDEX_NAMES.tasksWorker).on(sql`worker COLLATE NOCASE`),
+    index(DB_INDEX_NAMES.tasksStateQueuedAt).on(t.state, t.queuedAt),
+    index(DB_INDEX_NAMES.tasksStateStartedAt).on(t.state, t.startedAt),
+    index(DB_INDEX_NAMES.tasksStateExecutionTime).on(t.state, t.executionTime)
   ]
 )
 
