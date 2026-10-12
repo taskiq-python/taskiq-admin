@@ -4,7 +4,7 @@ import { DB_TABLE_NAMES } from '../../shared/db/constants'
 import { envVariables } from '../../shared/env'
 import { takeUniqueOrThrow, utcNow } from '../../shared/utils'
 import { TaskCreate, TaskState } from '../../shared/types'
-import { count, eq, desc, and, asc, gte, lte, sql, like } from 'drizzle-orm'
+import { count, eq, desc, and, asc, gte, lte, sql } from 'drizzle-orm'
 
 const escapeLikePattern = (value: string) =>
   value.replace(/[\\%_]/g, (character) => `\\${character}`)
@@ -12,7 +12,13 @@ const escapeLikePattern = (value: string) =>
 const buildNameCondition = (name: string) => {
   if (envVariables.dbDriver === 'postgres') {
     const pattern = `%${escapeLikePattern(name.toLowerCase())}%`
-    return like(tasksTable.name, pattern)
+    // lower(name) matches the gin_trgm index expression, so the index is used
+    return sql`lower(${tasksTable.name}) LIKE ${pattern}`
+  }
+  // the trigram tokenizer cannot match queries shorter than three characters
+  if ([...name].length < 3) {
+    const pattern = `%${escapeLikePattern(name)}%`
+    return sql`${tasksTable.name} LIKE ${pattern} ESCAPE '\\'`
   }
   // wrap user input as an FTS5 phrase query (escape embedded double quotes by doubling)
   const ftsQuery = `"${name.replace(/"/g, '""')}"`
@@ -21,9 +27,23 @@ const buildNameCondition = (name: string) => {
   )} WHERE name MATCH ${ftsQuery})`
 }
 
+// substring search over serialized args and kwargs
+const buildArgsCondition = (value: string) => {
+  if (envVariables.dbDriver === 'postgres') {
+    const pattern = `%${escapeLikePattern(value.toLowerCase())}%`
+    // must stay in sync with the tasksArgsTrgm index expression in db/init.ts
+    return sql`lower(coalesce(${tasksTable.args}::text, '') || ' ' || coalesce(${tasksTable.kwargs}::text, '')) LIKE ${pattern}`
+  }
+  // sqlite LIKE is case-insensitive for ASCII only and lower() is ASCII-only too,
+  // so the pattern is passed as is
+  const pattern = `%${escapeLikePattern(value)}%`
+  return sql`(coalesce(${tasksTable.args}, '') || ' ' || coalesce(${tasksTable.kwargs}, '')) LIKE ${pattern} ESCAPE '\\'`
+}
+
 class TasksRepository {
   async getAll({
     name,
+    args,
     state,
     limit,
     offset,
@@ -36,6 +56,7 @@ class TasksRepository {
     limit: number
     offset: number
     name: string | null
+    args?: string | null
     state?: TaskState
     sortByRuntime?: 'asc' | 'desc'
     sortByStartedAt?: 'asc' | 'desc'
@@ -46,6 +67,9 @@ class TasksRepository {
     const whereConditions = []
     if (name) {
       whereConditions.push(buildNameCondition(name))
+    }
+    if (args) {
+      whereConditions.push(buildArgsCondition(args))
     }
     if (state) {
       whereConditions.push(eq(tasksTable.state, state))

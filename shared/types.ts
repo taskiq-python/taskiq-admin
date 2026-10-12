@@ -3,6 +3,7 @@ export type QueryParams = {
   perPage: number
   state?: string
   search?: string
+  argsSearch?: string
   sortByRuntime?: string
   sortByStartedAt?: string
   sortByQueuedAt?: string
