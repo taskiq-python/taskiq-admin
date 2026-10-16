@@ -29,6 +29,7 @@ export const taskRouteParamsSchema = z.object({
 
 export const getTasksQueryParamsSchema = z.object({
   search: z.string().optional(),
+  argsSearch: z.string().optional(),
   limit: z.coerce.number().gte(0),
   offset: z.coerce.number().gte(0),
   state: z
