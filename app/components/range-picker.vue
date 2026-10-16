@@ -30,7 +30,10 @@ watch(dateRange, async () => {
   router.push({
     path: '/tasks',
     query: {
-      ...route.params,
+      ...route.query,
+      cursorQueuedAt: undefined,
+      cursorId: undefined,
+      direction: undefined,
       startDate: dateRange.value.start?.toString(),
       endDate: dateRange.value.end?.toString()
     }

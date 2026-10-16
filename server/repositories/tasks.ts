@@ -2,9 +2,9 @@ import { db } from '../../shared/db'
 import { tasksTable } from '../../shared/db/schema'
 import { DB_TABLE_NAMES } from '../../shared/db/constants'
 import { envVariables } from '../../shared/env'
-import { takeUniqueOrThrow, utcNow } from '../../shared/utils'
+import { utcNow } from '../../shared/utils'
 import { TaskCreate, TaskState } from '../../shared/types'
-import { count, eq, desc, and, asc, gte, lte, sql, like } from 'drizzle-orm'
+import { eq, desc, and, asc, gte, lte, sql, like } from 'drizzle-orm'
 
 const escapeLikePattern = (value: string) =>
   value.replace(/[\\%_]/g, (character) => `\\${character}`)
@@ -13,6 +13,11 @@ const buildNameCondition = (name: string) => {
   if (envVariables.dbDriver === 'postgres') {
     const pattern = `%${escapeLikePattern(name.toLowerCase())}%`
     return like(tasksTable.name, pattern)
+  }
+  // the trigram tokenizer cannot match terms shorter than 3 characters, fall back to LIKE
+  if ([...name].length < 3) {
+    const pattern = `%${escapeLikePattern(name.toLowerCase())}%`
+    return sql`lower(${tasksTable.name}) LIKE ${pattern} ESCAPE '\\'`
   }
   // wrap user input as an FTS5 phrase query (escape embedded double quotes by doubling)
   const ftsQuery = `"${name.replace(/"/g, '""')}"`
@@ -26,20 +31,16 @@ class TasksRepository {
     name,
     state,
     limit,
-    offset,
-    sortByRuntime,
-    sortByStartedAt,
-    sortByQueuedAt,
+    cursor,
+    direction = 'next',
     startDate,
     endDate
   }: {
     limit: number
-    offset: number
     name: string | null
     state?: TaskState
-    sortByRuntime?: 'asc' | 'desc'
-    sortByStartedAt?: 'asc' | 'desc'
-    sortByQueuedAt?: 'asc' | 'desc'
+    cursor?: { queuedAt: Date; id: string }
+    direction?: 'next' | 'prev'
     startDate?: Date
     endDate?: Date
   }) {
@@ -56,46 +57,40 @@ class TasksRepository {
     if (endDate) {
       whereConditions.push(lte(tasksTable.startedAt, endDate))
     }
-
-    const orderMap = { asc, desc }
-    const sortConditions = []
-    if (sortByRuntime) {
-      sortConditions.push(orderMap[sortByRuntime](tasksTable.executionTime))
-    }
-    if (sortByStartedAt) {
-      sortConditions.push(orderMap[sortByStartedAt](tasksTable.startedAt))
-    }
-    if (sortByQueuedAt) {
-      sortConditions.push(orderMap[sortByQueuedAt](tasksTable.queuedAt))
-    }
-    if (sortConditions.length === 0) {
-      sortConditions.push(desc(tasksTable.queuedAt))
+    const isNext = direction === 'next'
+    if (cursor) {
+      const cursorQueuedAt = sql.param(cursor.queuedAt, tasksTable.queuedAt)
+      whereConditions.push(
+        isNext
+          ? sql`(${tasksTable.queuedAt}, ${tasksTable.id}) < (${cursorQueuedAt}, ${cursor.id})`
+          : sql`(${tasksTable.queuedAt}, ${tasksTable.id}) > (${cursorQueuedAt}, ${cursor.id})`
+      )
     }
 
-    const whereClause = whereConditions.length
-      ? and(...whereConditions)
-      : undefined
-
-    const countQuery = db
-      .select({
-        count: count()
-      })
+    const order = isNext ? desc : asc
+    const rows = await db
+      .select()
       .from(tasksTable)
+      .where(whereConditions.length ? and(...whereConditions) : undefined)
+      .orderBy(order(tasksTable.queuedAt), order(tasksTable.id))
+      .limit(limit + 1)
 
-    const tasksQuery = db.select().from(tasksTable)
+    const hasMore = rows.length > limit
+    const tasks = rows.slice(0, limit)
+    if (!isNext) {
+      tasks.reverse()
+    }
 
-    const countResult = await (
-      whereClause ? countQuery.where(whereClause) : countQuery
-    ).then(takeUniqueOrThrow)
+    const hasNext = isNext ? hasMore : tasks.length > 0
+    const hasPrev = isNext ? !!cursor : hasMore
+    const toCursor = (task?: (typeof tasks)[number]) =>
+      task ? { queuedAt: task.queuedAt.toISOString(), id: task.id } : null
 
-    const tasks = await (
-      whereClause ? tasksQuery.where(whereClause) : tasksQuery
-    )
-      .orderBy(...sortConditions)
-      .limit(limit)
-      .offset(offset)
-
-    return { tasks, count: countResult.count }
+    return {
+      tasks,
+      nextCursor: hasNext ? toCursor(tasks[tasks.length - 1]) : null,
+      prevCursor: hasPrev ? toCursor(tasks[0]) : null
+    }
   }
 
   async getById(taskId: string) {

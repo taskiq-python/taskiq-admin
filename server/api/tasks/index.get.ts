@@ -5,17 +5,16 @@ import { getTasksQueryParamsSchema } from '../../../shared/schemas/tasks'
 export default defineEventHandler(async (event) => {
   const query = await getValidatedQuery(event, getTasksQueryParamsSchema.parse)
 
-  const { tasks, count } = await tasksRepository.getAll({
+  return tasksRepository.getAll({
     name: query.search ? query.search : null,
     limit: query.limit,
-    offset: query.offset,
     state: query.state,
-    sortByRuntime: query.sortByRuntime,
-    sortByStartedAt: query.sortByStartedAt,
-    sortByQueuedAt: query.sortByQueuedAt,
-    startDate: query.startDate ? new Date(query.startDate) : undefined,
-    endDate: query.endDate ? new Date(query.endDate) : undefined
+    startDate: query.startDate,
+    endDate: query.endDate,
+    cursor:
+      query.cursorQueuedAt && query.cursorId
+        ? { queuedAt: query.cursorQueuedAt, id: query.cursorId }
+        : undefined,
+    direction: query.direction
   })
-
-  return { tasks, count }
 })

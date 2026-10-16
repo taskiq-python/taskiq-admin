@@ -7,7 +7,7 @@ const perPageStorage = useLocalStorage<number>('tasks-per-page', 15)
 const router = useRouter()
 router.push({
   path: '/tasks',
-  query: { page: 1, perPage: perPageStorage.value }
+  query: { perPage: perPageStorage.value }
 })
 </script>
 <template></template>
