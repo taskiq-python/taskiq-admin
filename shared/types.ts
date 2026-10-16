@@ -1,13 +1,12 @@
 export type QueryParams = {
-  page: number
   perPage: number
   state?: string
   search?: string
-  sortByRuntime?: string
-  sortByStartedAt?: string
-  sortByQueuedAt?: string
   startDate?: string
   endDate?: string
+  cursorQueuedAt?: string
+  cursorId?: string
+  direction?: 'next' | 'prev'
 }
 
 export const StateEnum = {

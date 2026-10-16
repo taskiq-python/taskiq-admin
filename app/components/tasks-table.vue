@@ -16,9 +16,7 @@ import {
   TableHeader
 } from '~/components/ui/table'
 import { CopyIcon, Maximize2Icon } from 'lucide-vue-next'
-import SortableArrow from '~/components/sortable-arrow.vue'
 import { toast } from 'vue-sonner'
-import type { QueryParams } from '~~/shared/types'
 import { inject } from 'vue'
 import {
   Dialog,
@@ -31,12 +29,9 @@ import {
 
 const { data } = defineProps<{
   data?: {
-    count: number
     tasks: TaskSelect[]
   }
 }>()
-
-const queryParams: QueryParams | undefined = inject('queryParams')
 
 const copyToClipboard = (value: string) => {
   navigator.clipboard.writeText(value)
@@ -48,24 +43,6 @@ const handleCopy = (value: string) => {
     description: 'The ID has been copied to your clipboard'
   })
 }
-
-const clickSortHandler = (name: 'StartedAt' | 'Runtime' | 'QueuedAt') => {
-  const param = queryParams?.[`sortBy${name}`]
-  if (param === 'asc') {
-    sortHandler?.(name, 'desc')
-  } else if (param) {
-    sortHandler?.(name, 'asc')
-  } else {
-    sortHandler?.(name, 'asc')
-  }
-}
-
-const sortHandler:
-  | ((
-      field: 'Runtime' | 'StartedAt' | 'QueuedAt',
-      order: 'asc' | 'desc'
-    ) => void)
-  | undefined = inject('sortHandler')
 
 const stateHandler:
   | ((
@@ -89,34 +66,10 @@ const searchHandler: ((value: string) => void) | undefined =
         <TableHead> Kwargs </TableHead>
         <TableHead> Result </TableHead>
         <TableHead class="text-center"> Error </TableHead>
-        <TableHead>
-          <div class="flex justify-between items-center gap-2">
-            <span>Queued At</span>
-            <SortableArrow
-              :order="queryParams?.sortByQueuedAt"
-              :clickHandler="() => clickSortHandler('QueuedAt')"
-            />
-          </div>
-        </TableHead>
-        <TableHead>
-          <div class="flex justify-between items-center gap-2">
-            <span>Started At</span>
-            <SortableArrow
-              :order="queryParams?.sortByStartedAt"
-              :clickHandler="() => clickSortHandler('StartedAt')"
-            />
-          </div>
-        </TableHead>
+        <TableHead>Queued At</TableHead>
+        <TableHead>Started At</TableHead>
         <TableHead>Finished At</TableHead>
-        <TableHead>
-          <div class="flex justify-between items-center gap-2">
-            <span>Runtime (s)</span>
-            <SortableArrow
-              :order="queryParams?.sortByRuntime"
-              :clickHandler="() => clickSortHandler('Runtime')"
-            />
-          </div>
-        </TableHead>
+        <TableHead>Runtime (s)</TableHead>
         <TableHead> Broker </TableHead>
       </TableRow>
     </TableHeader>

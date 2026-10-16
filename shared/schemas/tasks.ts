@@ -27,16 +27,19 @@ export const taskRouteParamsSchema = z.object({
   id: z.string()
 })
 
-export const getTasksQueryParamsSchema = z.object({
-  search: z.string().optional(),
-  limit: z.coerce.number().gte(0),
-  offset: z.coerce.number().gte(0),
-  state: z
-    .enum(['queued', 'success', 'running', 'failure', 'abandoned'])
-    .optional(),
-  sortByRuntime: z.enum(['asc', 'desc']).optional(),
-  sortByStartedAt: z.enum(['asc', 'desc']).optional(),
-  sortByQueuedAt: z.enum(['asc', 'desc']).optional(),
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional()
-})
+export const getTasksQueryParamsSchema = z
+  .object({
+    search: z.string().optional(),
+    limit: z.coerce.number().int().gte(1).lte(100),
+    state: z
+      .enum(['queued', 'success', 'running', 'failure', 'abandoned'])
+      .optional(),
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().optional(),
+    cursorQueuedAt: z.coerce.date().optional(),
+    cursorId: z.string().optional(),
+    direction: z.enum(['next', 'prev']).default('next')
+  })
+  .refine((q) => !!q.cursorQueuedAt === !!q.cursorId, {
+    message: 'cursorQueuedAt and cursorId must be provided together'
+  })
