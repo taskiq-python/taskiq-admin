@@ -4,7 +4,7 @@ import { DB_TABLE_NAMES } from '../../shared/db/constants'
 import { envVariables } from '../../shared/env'
 import { utcNow } from '../../shared/utils'
 import { TaskCreate, TaskState } from '../../shared/types'
-import { eq, desc, and, asc, gte, lte, sql, like } from 'drizzle-orm'
+import { eq, desc, and, asc, gte, lte, sql } from 'drizzle-orm'
 
 const escapeLikePattern = (value: string) =>
   value.replace(/[\\%_]/g, (character) => `\\${character}`)
@@ -12,7 +12,8 @@ const escapeLikePattern = (value: string) =>
 const buildNameCondition = (name: string) => {
   if (envVariables.dbDriver === 'postgres') {
     const pattern = `%${escapeLikePattern(name.toLowerCase())}%`
-    return like(tasksTable.name, pattern)
+    // lower(name) matches the gin_trgm index expression, so the index is used
+    return sql`lower(${tasksTable.name}) LIKE ${pattern}`
   }
   // the trigram tokenizer cannot match terms shorter than 3 characters, fall back to LIKE
   if ([...name].length < 3) {
