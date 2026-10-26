@@ -29,13 +29,15 @@ if (!route.query.perPage) {
   })
 }
 
-const searchRef = ref('')
+const searchRef = ref(route.query.search?.toString() ?? '')
+const argsSearchRef = ref(route.query.argsSearch?.toString() ?? '')
 const refreshSeconds = ref(5)
 const refreshActivated = ref(true)
 const queryParams = reactive<QueryParams>({
   perPage: Number(route.query.perPage) || perPageStorage.value,
   state: route.query.state?.toString(),
   search: route.query.search?.toString(),
+  argsSearch: route.query.argsSearch?.toString(),
   startDate: route.query.startDate?.toString(),
   endDate: route.query.endDate?.toString(),
   cursorQueuedAt: route.query.cursorQueuedAt?.toString(),
@@ -49,6 +51,7 @@ watch(
     queryParams.perPage = Number(route.query.perPage) || perPageStorage.value
     queryParams.state = route.query.state?.toString()
     queryParams.search = route.query.search?.toString()
+    queryParams.argsSearch = route.query.argsSearch?.toString()
     queryParams.startDate = route.query.startDate?.toString()
     queryParams.endDate = route.query.endDate?.toString()
     queryParams.cursorQueuedAt = route.query.cursorQueuedAt?.toString()
@@ -95,6 +98,7 @@ const { data, refresh } = useAsyncData<{
         limit: queryParams.perPage,
         state: queryParams.state,
         search: queryParams.search,
+        argsSearch: queryParams.argsSearch,
         startDate: queryParams.startDate,
         endDate: queryParams.endDate,
         cursorQueuedAt: queryParams.cursorQueuedAt,
@@ -111,6 +115,7 @@ const filtersExist = computed(
   () =>
     queryParams.state ||
     queryParams.search ||
+    queryParams.argsSearch ||
     queryParams.startDate ||
     queryParams.endDate
 )
@@ -157,13 +162,14 @@ useIntervalFn(() => {
 }, refreshMilliseconds)
 
 const searchSubmit = () => {
-  if (searchRef.value) {
-    resetCursor()
-    queryParams.search = searchRef.value
-  }
+  resetCursor()
+  queryParams.search = searchRef.value || undefined
+  queryParams.argsSearch = argsSearchRef.value || undefined
 }
 
 const clearFilters = () => {
+  searchRef.value = ''
+  argsSearchRef.value = ''
   router.push({
     path: '/tasks',
     query: {
@@ -262,17 +268,26 @@ const handlePrev = () => goTo(data.value?.prevCursor, 'prev')
               >Clear Filters</Button
             >
           </div>
-          <div class="flex">
+          <div class="flex gap-2">
             <Input
               type="search"
               name="search"
               class="form-control w-auto"
               placeholder="Search tasks..."
               v-model="searchRef"
+              @keyup.enter="searchSubmit"
+            />
+            <Input
+              type="search"
+              name="argsSearch"
+              class="form-control w-auto"
+              placeholder="Search args / kwargs..."
+              v-model="argsSearchRef"
+              @keyup.enter="searchSubmit"
             />
             <Button
               @click="searchSubmit"
-              class="btn btn-primary ml-2"
+              class="btn btn-primary"
             >
               Search
             </Button>

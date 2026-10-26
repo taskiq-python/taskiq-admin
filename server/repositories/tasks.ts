@@ -26,9 +26,22 @@ const buildNameCondition = (name: string) => {
   )} WHERE name MATCH ${ftsQuery})`
 }
 
+// substring search over serialized args and kwargs
+const buildArgsCondition = (value: string) => {
+  if (envVariables.dbDriver === 'postgres') {
+    const pattern = `%${escapeLikePattern(value.toLowerCase())}%`
+    return sql`lower(coalesce(${tasksTable.args}::text, '') || ' ' || coalesce(${tasksTable.kwargs}::text, '')) LIKE ${pattern}`
+  }
+  // sqlite LIKE is case-insensitive for ASCII only and lower() is ASCII-only too,
+  // so the pattern is passed as is
+  const pattern = `%${escapeLikePattern(value)}%`
+  return sql`(coalesce(${tasksTable.args}, '') || ' ' || coalesce(${tasksTable.kwargs}, '')) LIKE ${pattern} ESCAPE '\\'`
+}
+
 class TasksRepository {
   async getAll({
     name,
+    args,
     state,
     limit,
     cursor,
@@ -38,6 +51,7 @@ class TasksRepository {
   }: {
     limit: number
     name: string | null
+    args?: string | null
     state?: TaskState
     cursor?: { queuedAt: Date; id: string }
     direction?: 'next' | 'prev'
@@ -47,6 +61,9 @@ class TasksRepository {
     const whereConditions = []
     if (name) {
       whereConditions.push(buildNameCondition(name))
+    }
+    if (args) {
+      whereConditions.push(buildArgsCondition(args))
     }
     if (state) {
       whereConditions.push(eq(tasksTable.state, state))

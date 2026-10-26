@@ -2,6 +2,7 @@ export type QueryParams = {
   perPage: number
   state?: string
   search?: string
+  argsSearch?: string
   startDate?: string
   endDate?: string
   cursorQueuedAt?: string
