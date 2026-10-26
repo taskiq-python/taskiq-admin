@@ -30,6 +30,7 @@ export const taskRouteParamsSchema = z.object({
 export const getTasksQueryParamsSchema = z
   .object({
     search: z.string().optional(),
+    argsSearch: z.string().optional(),
     limit: z.coerce.number().int().gte(1).lte(100),
     state: z
       .enum(['queued', 'success', 'running', 'failure', 'abandoned'])

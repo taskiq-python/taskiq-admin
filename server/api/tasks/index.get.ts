@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
 
   return tasksRepository.getAll({
     name: query.search ? query.search : null,
+    args: query.argsSearch ? query.argsSearch : null,
     limit: query.limit,
     state: query.state,
     startDate: query.startDate,

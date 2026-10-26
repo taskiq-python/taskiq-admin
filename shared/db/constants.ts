@@ -16,7 +16,8 @@ export const DB_INDEX_NAMES = {
   tasksStateStartedAt: 'idx_taskiq_admin_tasks__state_started_at',
   tasksStateExecutionTime: 'idx_taskiq_admin_tasks__state_execution_time',
   tasksNameFts: 'idx_taskiq_admin_tasks__name_fts',
-  tasksNameTrgm: 'idx_taskiq_admin_tasks__name_trgm'
+  tasksNameTrgm: 'idx_taskiq_admin_tasks__name_trgm',
+  tasksArgsTrgm: 'idx_taskiq_admin_tasks__args_trgm'
 } as const
 
 export const DB_TRIGGER_NAMES = {

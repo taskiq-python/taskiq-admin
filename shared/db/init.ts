@@ -61,6 +61,11 @@ export const dbInitializationStatements: Record<DBDriver, DBInitStatement[]> = {
       sql: `CREATE INDEX IF NOT EXISTS "${DB_INDEX_NAMES.tasksNameTrgm}" ON "${DB_TABLE_NAMES.tasks}" USING gin (lower("name") gin_trgm_ops)`,
       optional: true,
       warning: PG_TRGM_WARNING
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS "${DB_INDEX_NAMES.tasksArgsTrgm}" ON "${DB_TABLE_NAMES.tasks}" USING gin ((lower(coalesce("args"::text, '') || ' ' || coalesce("kwargs"::text, ''))) gin_trgm_ops)`,
+      optional: true,
+      warning: PG_TRGM_WARNING
     }
   ]
 }
